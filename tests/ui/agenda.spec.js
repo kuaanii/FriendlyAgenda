@@ -92,6 +92,7 @@ test("color, subrayado y listas se conservan al exportar y restaurar", async ({
   await editor.click();
   await page.getByRole("button", { name: "Subrayado", exact: true }).click();
   await page.getByLabel("Color del texto", { exact: true }).fill("#aa3300");
+  await expect(editor).toBeFocused();
   await page.keyboard.type("Plan de estudio");
   await page
     .getByRole("button", { name: "Lista con viñetas", exact: true })
@@ -127,4 +128,57 @@ test("color, subrayado y listas se conservan al exportar y restaurar", async ({
       .first()
       .locator("li u"),
   ).toHaveText("Plan de estudio");
+});
+test("las listas numeradas y los colores pegados se guardan", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const editor = page.getByRole("textbox", { name: /Notas del/ }).first();
+  await editor.click();
+  await editor.evaluate((element) => {
+    const clipboard = new DataTransfer();
+    clipboard.setData(
+      "text/html",
+      '<p><span style="color: rgb(255, 0, 0)">Texto copiado</span></p>',
+    );
+    clipboard.setData("text/plain", "Texto copiado");
+    element.dispatchEvent(
+      new ClipboardEvent("paste", {
+        clipboardData: clipboard,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+  });
+  await expect(editor).toContainText("Texto copiado");
+  await page
+    .getByRole("button", { name: "Lista numerada", exact: true })
+    .click();
+  await expect(editor.locator("ol li")).toContainText("Texto copiado");
+  await expect(page.getByRole("status").first()).toHaveText("Todo guardado");
+  await page.reload();
+  await expect(
+    page
+      .getByRole("textbox", { name: /Notas del/ })
+      .first()
+      .locator("ol li span"),
+  ).toHaveCSS("color", "rgb(255, 0, 0)");
+});
+test("los errores de una copia inválida aparecen dentro del diálogo", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Mi espacio", exact: true }).click();
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: /Restaurar una copia/ }).click();
+  await (
+    await chooser
+  ).setFiles({
+    name: "invalida.json",
+    mimeType: "application/json",
+    buffer: Buffer.from('{"version":999}'),
+  });
+  await expect(page.getByRole("dialog").getByRole("alert")).toContainText(
+    "no es una copia válida",
+  );
 });

@@ -1,4 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { createRoot } from "react-dom/client";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -42,6 +48,8 @@ import {
 import { bridge } from "./bridge.js";
 import "./style.css";
 
+const FeedbackContext = createContext(null);
+
 const dateLabel = (date, options) =>
   new Intl.DateTimeFormat("es-ES", options).format(
     new Date(`${date}T12:00:00`),
@@ -61,6 +69,7 @@ function IconButton({ label, children, ...props }) {
 }
 
 function Modal({ title, children, onClose }) {
+  const feedback = useContext(FeedbackContext);
   const ref = useRef(null);
   useEffect(() => {
     const d = ref.current;
@@ -81,6 +90,14 @@ function Modal({ title, children, onClose }) {
           <X size={20} />
         </IconButton>
       </div>
+      {feedback?.error && (
+        <div className="inline-error" role="alert">
+          <span>{feedback.error}</span>
+          <button aria-label="Cerrar error" onClick={feedback.dismiss}>
+            <X size={16} />
+          </button>
+        </div>
+      )}
       {children}
     </dialog>
   );
@@ -272,7 +289,13 @@ function Toolbar({ editor }) {
         <input
           type="color"
           aria-label="Color del texto"
-          value={editor?.getAttributes("textStyle").color || "#6354a4"}
+          value={
+            /^#[0-9a-f]{6}$/i.test(
+              editor?.getAttributes("textStyle").color || "",
+            )
+              ? editor.getAttributes("textStyle").color
+              : "#6354a4"
+          }
           disabled={!editor}
           onChange={(e) => run((c) => c.setColor(e.target.value))}
         />
@@ -573,529 +596,543 @@ function App() {
     setNotice("Apunte guardado. Una cosa menos en la cabeza.");
   }
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <a className="brand" href="#" onClick={(e) => e.preventDefault()}>
-          <span className="brand-icon">
-            <BookOpen size={23} />
-          </span>
-          <span>
-            friendly<span className="brand-light">agenda</span>
-            <small>TU DÍA, CON CALMA.</small>
-          </span>
-        </a>
-        <button className="search-button" onClick={() => setSearch("")}>
-          <Search size={17} />
-          <span>Buscar en tu agenda</span>
-          <kbd>Ctrl K</kbd>
-        </button>
-        <nav className="main-nav">
-          <button
-            className="nav-active"
-            onClick={() => {
-              setFilter("");
-              navigate(today());
-            }}
-          >
-            <BookOpen size={18} /> Mi agenda <span className="nav-dot" />
+    <FeedbackContext.Provider value={{ error, dismiss: () => setError("") }}>
+      <div className="app-shell">
+        <aside className="sidebar">
+          <a className="brand" href="#" onClick={(e) => e.preventDefault()}>
+            <span className="brand-icon">
+              <BookOpen size={23} />
+            </span>
+            <span>
+              friendly<span className="brand-light">agenda</span>
+              <small>TU DÍA, CON CALMA.</small>
+            </span>
+          </a>
+          <button className="search-button" onClick={() => setSearch("")}>
+            <Search size={17} />
+            <span>Buscar en tu agenda</span>
+            <kbd>Ctrl K</kbd>
           </button>
-          <button
-            onClick={() => {
-              setSettings(true);
-            }}
-          >
-            <FolderOpen size={18} /> Mi espacio <ArrowUpRight size={15} />
-          </button>
-        </nav>
-        <MiniCalendar start={start} onSelect={navigate} />
-        <section className="subject-section">
-          <div className="section-heading">
-            <span>MIS ASIGNATURAS</span>
-            <IconButton
-              label="Gestionar asignaturas"
-              onClick={() => setSubjectsOpen(true)}
+          <nav className="main-nav">
+            <button
+              className="nav-active"
+              onClick={() => {
+                setFilter("");
+                navigate(today());
+              }}
             >
-              <Plus size={15} />
+              <BookOpen size={18} /> Mi agenda <span className="nav-dot" />
+            </button>
+            <button
+              onClick={() => {
+                setSettings(true);
+              }}
+            >
+              <FolderOpen size={18} /> Mi espacio <ArrowUpRight size={15} />
+            </button>
+          </nav>
+          <MiniCalendar start={start} onSelect={navigate} />
+          <section className="subject-section">
+            <div className="section-heading">
+              <span>MIS ASIGNATURAS</span>
+              <IconButton
+                label="Gestionar asignaturas"
+                onClick={() => setSubjectsOpen(true)}
+              >
+                <Plus size={15} />
+              </IconButton>
+            </div>
+            <button
+              className={`subject ${!filter ? "selected" : ""}`}
+              onClick={() => setFilter("")}
+            >
+              <span className="all-dot" /> Todas las asignaturas{" "}
+              <span>{data.subjects.length}</span>
+            </button>
+            {data.subjects.map((s) => (
+              <button
+                key={s.id}
+                className={`subject ${filter === s.id ? "selected" : ""}`}
+                onClick={() => setFilter(filter === s.id ? "" : s.id)}
+              >
+                <i style={{ background: s.color }} />
+                {s.name}
+                {filter === s.id && <Check size={14} />}
+              </button>
+            ))}
+          </section>
+          <section className="sidebar-note">
+            <span className="little-star">✳</span>
+            <h3>
+              Menos ruido.
+              <br />
+              Más espacio para ti.
+            </h3>
+            <p>Tus planes, tus ideas, tus pequeños grandes pasos.</p>
+            <span className="privacy-label">
+              <span /> Solo en tu ordenador
+            </span>
+          </section>
+          <div className="sidebar-bottom">
+            <button
+              onClick={() =>
+                setData({
+                  ...data,
+                  theme: data.theme === "light" ? "dark" : "light",
+                })
+              }
+            >
+              {data.theme === "light" ? <Moon size={17} /> : <Sun size={17} />}{" "}
+              Tema {data.theme === "light" ? "oscuro" : "claro"}
+            </button>
+            <IconButton
+              label="Ajustes y copias de seguridad"
+              onClick={() => setSettings(true)}
+            >
+              <Settings2 size={18} />
             </IconButton>
           </div>
-          <button
-            className={`subject ${!filter ? "selected" : ""}`}
-            onClick={() => setFilter("")}
-          >
-            <span className="all-dot" /> Todas las asignaturas{" "}
-            <span>{data.subjects.length}</span>
-          </button>
-          {data.subjects.map((s) => (
-            <button
-              key={s.id}
-              className={`subject ${filter === s.id ? "selected" : ""}`}
-              onClick={() => setFilter(filter === s.id ? "" : s.id)}
-            >
-              <i style={{ background: s.color }} />
-              {s.name}
-              {filter === s.id && <Check size={14} />}
-            </button>
-          ))}
-        </section>
-        <section className="sidebar-note">
-          <span className="little-star">✳</span>
-          <h3>
-            Menos ruido.
-            <br />
-            Más espacio para ti.
-          </h3>
-          <p>Tus planes, tus ideas, tus pequeños grandes pasos.</p>
-          <span className="privacy-label">
-            <span /> Solo en tu ordenador
-          </span>
-        </section>
-        <div className="sidebar-bottom">
-          <button
-            onClick={() =>
-              setData({
-                ...data,
-                theme: data.theme === "light" ? "dark" : "light",
-              })
-            }
-          >
-            {data.theme === "light" ? <Moon size={17} /> : <Sun size={17} />}{" "}
-            Tema {data.theme === "light" ? "oscuro" : "claro"}
-          </button>
-          <IconButton
-            label="Ajustes y copias de seguridad"
-            onClick={() => setSettings(true)}
-          >
-            <Settings2 size={18} />
-          </IconButton>
-        </div>
-      </aside>
-      <main className="main-content">
-        <header className="topbar">
-          <span>
-            <span className="tiny-dot" /> TU AGENDA PERSONAL
-          </span>
-          <div className="topbar-right">
-            <span
-              className={`save-state ${status === "Error al guardar" ? "save-error" : ""}`}
-              role="status"
-            >
-              <Check size={13} />
-              {status}
+        </aside>
+        <main className="main-content">
+          <header className="topbar">
+            <span>
+              <span className="tiny-dot" /> TU AGENDA PERSONAL
             </span>
-            <span className="local-badge">LOCAL & PRIVADA</span>
-          </div>
-        </header>
-        <div className="workspace">
-          <section className="welcome">
-            <div>
-              <p className="eyebrow">
-                UN POCO DE ORDEN. UN MUNDO DE POSIBILIDADES.
-              </p>
-              <h1>
-                Haz sitio a lo <em>importante.</em>
-              </h1>
-              <p className="welcome-subtitle">
-                Saca los planes de tu cabeza. Dales su propio espacio.
-              </p>
-            </div>
-            <button
-              className="primary-button"
-              onClick={() => setEntry({ date: start, type: "homework" })}
-            >
-              <Plus size={17} /> Nuevo apunte
-            </button>
-          </section>
-          <section className="agenda-controls">
-            <div className="month-title">
-              <span className="calendar-icon">
-                <CalendarDays size={19} />
-              </span>
-              <h2>
-                {dateLabel(start, { month: "long" })}{" "}
-                <span>{dateLabel(start, { year: "numeric" })}</span>
-              </h2>
-            </div>
-            <div className="date-controls">
-              <button
-                className="today-button"
-                onClick={() => navigate(today())}
+            <div className="topbar-right">
+              <span
+                className={`save-state ${status === "Error al guardar" ? "save-error" : ""}`}
+                role="status"
               >
-                Hoy
+                <Check size={13} />
+                {status}
+              </span>
+              <span className="local-badge">LOCAL & PRIVADA</span>
+            </div>
+          </header>
+          <div className="workspace">
+            <section className="welcome">
+              <div>
+                <p className="eyebrow">
+                  UN POCO DE ORDEN. UN MUNDO DE POSIBILIDADES.
+                </p>
+                <h1>
+                  Haz sitio a lo <em>importante.</em>
+                </h1>
+                <p className="welcome-subtitle">
+                  Saca los planes de tu cabeza. Dales su propio espacio.
+                </p>
+              </div>
+              <button
+                className="primary-button"
+                onClick={() => setEntry({ date: start, type: "homework" })}
+              >
+                <Plus size={17} /> Nuevo apunte
               </button>
-              <span className="date-range">
-                {shortDate(start)} — {shortDate(dates[3])}
-              </span>
-              <div className="pager">
-                <IconButton
-                  label="Cuatro días anteriores"
-                  onClick={() => navigate(addDays(start, -4))}
-                >
-                  <ChevronLeft size={18} />
-                </IconButton>
-                <IconButton
-                  label="Cuatro días siguientes"
-                  onClick={() => navigate(addDays(start, 4))}
-                >
-                  <ChevronRight size={18} />
-                </IconButton>
+            </section>
+            <section className="agenda-controls">
+              <div className="month-title">
+                <span className="calendar-icon">
+                  <CalendarDays size={19} />
+                </span>
+                <h2>
+                  {dateLabel(start, { month: "long" })}{" "}
+                  <span>{dateLabel(start, { year: "numeric" })}</span>
+                </h2>
               </div>
-            </div>
-          </section>
-          <div className="book-wrap">
-            <Toolbar editor={active} />
-            {filter && (
-              <div className="filter-banner">
-                Apuntes de {data.subjects.find((s) => s.id === filter)?.name}
-                <button onClick={() => setFilter("")}>
-                  Mostrar todos <X size={13} />
+              <div className="date-controls">
+                <button
+                  className="today-button"
+                  onClick={() => navigate(today())}
+                >
+                  Hoy
                 </button>
-              </div>
-            )}
-            <div className="book" key={documentKey}>
-              {[dates.slice(0, 2), dates.slice(2)].map((page, i) => (
-                <div className={`paper paper-${i}`} key={i}>
-                  {page.map((date) => (
-                    <Day
-                      key={date}
-                      date={date}
-                      day={data.days[date] || blankDay()}
-                      subjects={data.subjects}
-                      onChange={patchDay}
-                      onEdit={setEntry}
-                      onActive={setActive}
-                      filter={filter}
-                    />
-                  ))}
-                  <div className="page-footer">
-                    <span>FRIENDLY AGENDA</span>
-                    <span>
-                      {i === 0 ? "Un día a la vez." : "Lo estás haciendo bien."}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="under-book">
-            <span>
-              <BookOpen size={14} /> Cuatro días. Todo tu espacio.
-            </span>
-            <span>
-              {done} de {total.length} apuntes completados{" "}
-              <span className="progress-track">
-                <i
-                  style={{
-                    width: `${total.length ? (done / total.length) * 100 : 0}%`,
-                  }}
-                />
-              </span>
-            </span>
-          </div>
-          <section className="upcoming-section">
-            <div className="section-heading">
-              <h2>
-                En el horizonte <span>Lo próximo, sin perder la calma.</span>
-              </h2>
-              <ArrowUpRight size={18} />
-            </div>
-            {upcoming.length ? (
-              <div className="upcoming-grid">
-                {upcoming.map((e) => (
-                  <button
-                    className="upcoming-card"
-                    key={e.id}
-                    onClick={() => {
-                      navigate(e.date);
-                      setEntry(e);
-                    }}
+                <span className="date-range">
+                  {shortDate(start)} — {shortDate(dates[3])}
+                </span>
+                <div className="pager">
+                  <IconButton
+                    label="Cuatro días anteriores"
+                    onClick={() => navigate(addDays(start, -4))}
                   >
-                    <span className="upcoming-date">{shortDate(e.date)}</span>
-                    <strong>{e.title}</strong>
-                    <span>
-                      {e.type === "exam" ? "Examen" : "Deber"}{" "}
-                      <ArrowRight size={15} />
-                    </span>
+                    <ChevronLeft size={18} />
+                  </IconButton>
+                  <IconButton
+                    label="Cuatro días siguientes"
+                    onClick={() => navigate(addDays(start, 4))}
+                  >
+                    <ChevronRight size={18} />
+                  </IconButton>
+                </div>
+              </div>
+            </section>
+            <div className="book-wrap">
+              <Toolbar editor={active} />
+              {filter && (
+                <div className="filter-banner">
+                  Apuntes de {data.subjects.find((s) => s.id === filter)?.name}
+                  <button onClick={() => setFilter("")}>
+                    Mostrar todos <X size={13} />
                   </button>
+                </div>
+              )}
+              <div className="book" key={documentKey}>
+                {[dates.slice(0, 2), dates.slice(2)].map((page, i) => (
+                  <div className={`paper paper-${i}`} key={i}>
+                    {page.map((date) => (
+                      <Day
+                        key={date}
+                        date={date}
+                        day={data.days[date] || blankDay()}
+                        subjects={data.subjects}
+                        onChange={patchDay}
+                        onEdit={setEntry}
+                        onActive={setActive}
+                        filter={filter}
+                      />
+                    ))}
+                    <div className="page-footer">
+                      <span>FRIENDLY AGENDA</span>
+                      <span>
+                        {i === 0
+                          ? "Un día a la vez."
+                          : "Lo estás haciendo bien."}
+                      </span>
+                    </div>
+                  </div>
                 ))}
               </div>
-            ) : (
-              <div className="empty-upcoming">
-                <Circle size={19} />
-                <span>
-                  Un horizonte despejado. Tus próximos deberes y exámenes
-                  aparecerán aquí.
+            </div>
+            <div className="under-book">
+              <span>
+                <BookOpen size={14} /> Cuatro días. Todo tu espacio.
+              </span>
+              <span>
+                {done} de {total.length} apuntes completados{" "}
+                <span className="progress-track">
+                  <i
+                    style={{
+                      width: `${total.length ? (done / total.length) * 100 : 0}%`,
+                    }}
+                  />
                 </span>
-                <button onClick={() => setEntry({ date: start, type: "exam" })}>
-                  Añadir un plan <ArrowRight size={14} />
-                </button>
+              </span>
+            </div>
+            <section className="upcoming-section">
+              <div className="section-heading">
+                <h2>
+                  En el horizonte <span>Lo próximo, sin perder la calma.</span>
+                </h2>
+                <ArrowUpRight size={18} />
               </div>
-            )}
-          </section>
-          <footer className="main-footer">
-            <span>Hecha para tus días. A tu manera.</span>
-            <span>Sin cuentas. Sin nube. Solo tú.</span>
-          </footer>
-        </div>
-      </main>
-      {entry && (
-        <EntryForm
-          entry={entry}
-          subjects={data.subjects}
-          onSave={saveEntry}
-          onClose={() => setEntry(null)}
-          onDelete={(e) => {
-            patchDay(e.date, (d) => ({
-              ...d,
-              entries: d.entries.filter((v) => v.id !== e.id),
-            }));
-            setEntry(null);
-            setDeletedEntry(e);
-            setNotice("Apunte eliminado.");
-          }}
-        />
-      )}
-      {search !== null && (
-        <Modal title="Encuentra ese apunte" onClose={() => setSearch(null)}>
-          <div className="search-field">
-            <Search size={20} />
-            <input
-              aria-label="Buscar texto"
-              autoFocus
-              placeholder="Un deber, un examen, una idea…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+              {upcoming.length ? (
+                <div className="upcoming-grid">
+                  {upcoming.map((e) => (
+                    <button
+                      className="upcoming-card"
+                      key={e.id}
+                      onClick={() => {
+                        navigate(e.date);
+                        setEntry(e);
+                      }}
+                    >
+                      <span className="upcoming-date">{shortDate(e.date)}</span>
+                      <strong>{e.title}</strong>
+                      <span>
+                        {e.type === "exam" ? "Examen" : "Deber"}{" "}
+                        <ArrowRight size={15} />
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-upcoming">
+                  <Circle size={19} />
+                  <span>
+                    Un horizonte despejado. Tus próximos deberes y exámenes
+                    aparecerán aquí.
+                  </span>
+                  <button
+                    onClick={() => setEntry({ date: start, type: "exam" })}
+                  >
+                    Añadir un plan <ArrowRight size={14} />
+                  </button>
+                </div>
+              )}
+            </section>
+            <footer className="main-footer">
+              <span>Hecha para tus días. A tu manera.</span>
+              <span>Sin cuentas. Sin nube. Solo tú.</span>
+            </footer>
           </div>
-          <div className="search-results">
-            {!search.trim() ? (
-              <p>Busca en tus notas, deberes, exámenes y asignaturas.</p>
-            ) : !results.length ? (
-              <p>No hay resultados para «{search}».</p>
-            ) : (
-              results.map((r, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    navigate(r.date);
-                    setSearch(null);
-                  }}
-                >
-                  <span>{shortDate(r.date)}</span>
-                  <strong>{r.title}</strong>
-                  <ArrowRight size={16} />
-                </button>
-              ))
-            )}
-          </div>
-        </Modal>
-      )}
-      {subjectsOpen && (
-        <Modal title="Tus asignaturas" onClose={() => setSubjectsOpen(false)}>
-          <p className="modal-description">
-            Un color para cada materia. Un lugar para cada idea.
-          </p>
-          <div className="subject-edit-list">
-            {data.subjects.map((s) => (
-              <div key={s.id}>
-                <input
-                  aria-label={`Color de ${s.name}`}
-                  type="color"
-                  value={s.color}
-                  onChange={(e) =>
-                    setData((prev) => ({
-                      ...prev,
-                      subjects: prev.subjects.map((v) =>
-                        v.id === s.id ? { ...v, color: e.target.value } : v,
-                      ),
-                    }))
-                  }
-                />
-                <input
-                  aria-label={`Nombre de ${s.name}`}
-                  value={s.name}
-                  maxLength={60}
-                  onChange={(e) => {
-                    const name = e.target.value;
-                    if (name.trim())
+        </main>
+        {entry && (
+          <EntryForm
+            entry={entry}
+            subjects={data.subjects}
+            onSave={saveEntry}
+            onClose={() => setEntry(null)}
+            onDelete={(e) => {
+              patchDay(e.date, (d) => ({
+                ...d,
+                entries: d.entries.filter((v) => v.id !== e.id),
+              }));
+              setEntry(null);
+              setDeletedEntry(e);
+              setNotice("Apunte eliminado.");
+            }}
+          />
+        )}
+        {search !== null && (
+          <Modal title="Encuentra ese apunte" onClose={() => setSearch(null)}>
+            <div className="search-field">
+              <Search size={20} />
+              <input
+                aria-label="Buscar texto"
+                autoFocus
+                placeholder="Un deber, un examen, una idea…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="search-results">
+              {!search.trim() ? (
+                <p>Busca en tus notas, deberes, exámenes y asignaturas.</p>
+              ) : !results.length ? (
+                <p>No hay resultados para «{search}».</p>
+              ) : (
+                results.map((r, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      navigate(r.date);
+                      setSearch(null);
+                    }}
+                  >
+                    <span>{shortDate(r.date)}</span>
+                    <strong>{r.title}</strong>
+                    <ArrowRight size={16} />
+                  </button>
+                ))
+              )}
+            </div>
+          </Modal>
+        )}
+        {subjectsOpen && (
+          <Modal title="Tus asignaturas" onClose={() => setSubjectsOpen(false)}>
+            <p className="modal-description">
+              Un color para cada materia. Un lugar para cada idea.
+            </p>
+            <div className="subject-edit-list">
+              {data.subjects.map((s) => (
+                <div key={s.id}>
+                  <input
+                    aria-label={`Color de ${s.name}`}
+                    type="color"
+                    value={s.color}
+                    onChange={(e) =>
                       setData((prev) => ({
                         ...prev,
                         subjects: prev.subjects.map((v) =>
-                          v.id === s.id ? { ...v, name } : v,
+                          v.id === s.id ? { ...v, color: e.target.value } : v,
                         ),
-                      }));
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!newSubject.trim()) return;
-              setData({
-                ...data,
-                subjects: [
-                  ...data.subjects,
-                  {
-                    id: crypto.randomUUID(),
-                    name: newSubject.trim(),
-                    color: subjectColor,
-                  },
-                ],
-              });
-              setNewSubject("");
-            }}
-          >
-            <label>Nueva asignatura</label>
-            <div className="new-subject">
-              <input
-                aria-label="Color de nueva asignatura"
-                type="color"
-                value={subjectColor}
-                onChange={(e) => setSubjectColor(e.target.value)}
-              />
-              <input
-                aria-label="Nueva asignatura"
-                placeholder="Nombre de la materia"
-                maxLength={60}
-                value={newSubject}
-                onChange={(e) => setNewSubject(e.target.value)}
-              />
-              <button className="primary-button" disabled={!newSubject.trim()}>
-                <Plus size={17} />
-              </button>
+                      }))
+                    }
+                  />
+                  <input
+                    aria-label={`Nombre de ${s.name}`}
+                    value={s.name}
+                    maxLength={60}
+                    onChange={(e) => {
+                      const name = e.target.value;
+                      if (name.trim())
+                        setData((prev) => ({
+                          ...prev,
+                          subjects: prev.subjects.map((v) =>
+                            v.id === s.id ? { ...v, name } : v,
+                          ),
+                        }));
+                    }}
+                  />
+                </div>
+              ))}
             </div>
-          </form>
-        </Modal>
-      )}
-      {settings && (
-        <Modal title="Tu espacio, a salvo" onClose={() => setSettings(false)}>
-          <p className="modal-description">
-            Tu agenda vive en este ordenador. Exporta una copia para guardarla
-            donde prefieras.
-          </p>
-          <div className="settings-actions">
-            <button onClick={exportData}>
-              <Download size={21} />
-              <span>
-                <strong>Exportar copia de seguridad</strong>
-                <small>Incluye notas, formato, apuntes y asignaturas.</small>
-              </span>
-              <ArrowUpRight size={16} />
-            </button>
-            <button onClick={importData}>
-              <Upload size={21} />
-              <span>
-                <strong>Restaurar una copia</strong>
-                <small>Recupera una agenda desde un archivo JSON.</small>
-              </span>
-              <ArrowUpRight size={16} />
-            </button>
-            {window.agenda && (
-              <button
-                onClick={() =>
-                  bridge.openFolder().catch((e) => setError(e.message))
-                }
-              >
-                <FolderOpen size={21} />
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!newSubject.trim()) return;
+                setData({
+                  ...data,
+                  subjects: [
+                    ...data.subjects,
+                    {
+                      id: crypto.randomUUID(),
+                      name: newSubject.trim(),
+                      color: subjectColor,
+                    },
+                  ],
+                });
+                setNewSubject("");
+              }}
+            >
+              <label>Nueva asignatura</label>
+              <div className="new-subject">
+                <input
+                  aria-label="Color de nueva asignatura"
+                  type="color"
+                  value={subjectColor}
+                  onChange={(e) => setSubjectColor(e.target.value)}
+                />
+                <input
+                  aria-label="Nueva asignatura"
+                  placeholder="Nombre de la materia"
+                  maxLength={60}
+                  value={newSubject}
+                  onChange={(e) => setNewSubject(e.target.value)}
+                />
+                <button
+                  className="primary-button"
+                  disabled={!newSubject.trim()}
+                >
+                  <Plus size={17} />
+                </button>
+              </div>
+            </form>
+          </Modal>
+        )}
+        {settings && (
+          <Modal title="Tu espacio, a salvo" onClose={() => setSettings(false)}>
+            <p className="modal-description">
+              Tu agenda vive en este ordenador. Exporta una copia para guardarla
+              donde prefieras.
+            </p>
+            <div className="settings-actions">
+              <button onClick={exportData}>
+                <Download size={21} />
                 <span>
-                  <strong>Abrir carpeta de datos</strong>
-                  <small>Archivo local y copia del guardado anterior.</small>
+                  <strong>Exportar copia de seguridad</strong>
+                  <small>Incluye notas, formato, apuntes y asignaturas.</small>
                 </span>
                 <ArrowUpRight size={16} />
               </button>
-            )}
-          </div>
-          <div className="about-box">
-            <BookOpen size={20} />
-            <span>
-              FriendlyAgenda{" "}
-              <small>Versión 0.1.0 · Código abierto · Licencia MIT</small>
-            </span>
-          </div>
-        </Modal>
-      )}
-      {pendingImport && (
-        <Modal
-          title="Restaurar tu agenda"
-          onClose={() => setPendingImport(null)}
-        >
-          <p className="modal-description">
-            Esta copia sustituirá la agenda actual. Exporta primero tus cambios
-            si quieres conservarlos por separado.
-          </p>
-          <div className="modal-actions">
-            <button className="secondary-button" onClick={exportData}>
-              Exportar la actual
-            </button>
-            <button
-              className="primary-button"
-              onClick={() => {
-                setData(pendingImport);
-                setPendingImport(null);
-                setSettings(false);
-                setActive(null);
-                setFilter("");
-                setDocumentKey((n) => n + 1);
-                setNotice("Copia restaurada. Tu agenda está de vuelta.");
-              }}
-            >
-              Restaurar copia
-            </button>
-          </div>
-        </Modal>
-      )}
-      <input
-        ref={fileInput}
-        className="hidden"
-        type="file"
-        accept=".json"
-        onChange={async (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          try {
-            if (file.size > 20 * 1024 * 1024)
-              throw new Error("La copia supera 20 MB.");
-            setPendingImport(decodeBackup(await file.text()));
-          } catch (err) {
-            setError(err.message);
-          }
-          e.target.value = "";
-        }}
-      />
-      {error && (
-        <div className="error-toast" role="alert">
-          <span>{error}</span>
-          <button onClick={() => setError("")} aria-label="Cerrar error">
-            <X size={16} />
-          </button>
-        </div>
-      )}
-      {notice && (
-        <div className="toast" role="status">
-          <Check size={17} />
-          {notice}
-          {deletedEntry && notice === "Apunte eliminado." && (
-            <button
-              onClick={() => {
-                const { date, ...item } = deletedEntry;
-                patchDay(date, (d) => ({
-                  ...d,
-                  entries: [...d.entries, item],
-                }));
-                setDeletedEntry(null);
-                setNotice("Apunte recuperado.");
-              }}
-            >
-              Deshacer
-            </button>
+              <button onClick={importData}>
+                <Upload size={21} />
+                <span>
+                  <strong>Restaurar una copia</strong>
+                  <small>Recupera una agenda desde un archivo JSON.</small>
+                </span>
+                <ArrowUpRight size={16} />
+              </button>
+              {window.agenda && (
+                <button
+                  onClick={() =>
+                    bridge.openFolder().catch((e) => setError(e.message))
+                  }
+                >
+                  <FolderOpen size={21} />
+                  <span>
+                    <strong>Abrir carpeta de datos</strong>
+                    <small>Archivo local y copia del guardado anterior.</small>
+                  </span>
+                  <ArrowUpRight size={16} />
+                </button>
+              )}
+            </div>
+            <div className="about-box">
+              <BookOpen size={20} />
+              <span>
+                FriendlyAgenda{" "}
+                <small>Versión 0.1.0 · Código abierto · Licencia MIT</small>
+              </span>
+            </div>
+          </Modal>
+        )}
+        {pendingImport && (
+          <Modal
+            title="Restaurar tu agenda"
+            onClose={() => setPendingImport(null)}
+          >
+            <p className="modal-description">
+              Esta copia sustituirá la agenda actual. Exporta primero tus
+              cambios si quieres conservarlos por separado.
+            </p>
+            <div className="modal-actions">
+              <button className="secondary-button" onClick={exportData}>
+                Exportar la actual
+              </button>
+              <button
+                className="primary-button"
+                onClick={() => {
+                  setData(pendingImport);
+                  setPendingImport(null);
+                  setSettings(false);
+                  setActive(null);
+                  setFilter("");
+                  setDocumentKey((n) => n + 1);
+                  setNotice("Copia restaurada. Tu agenda está de vuelta.");
+                }}
+              >
+                Restaurar copia
+              </button>
+            </div>
+          </Modal>
+        )}
+        <input
+          ref={fileInput}
+          className="hidden"
+          type="file"
+          accept=".json"
+          onChange={async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+              if (file.size > 20 * 1024 * 1024)
+                throw new Error("La copia supera 20 MB.");
+              setPendingImport(decodeBackup(await file.text()));
+            } catch (err) {
+              setError(err.message);
+            }
+            e.target.value = "";
+          }}
+        />
+        {error &&
+          !entry &&
+          search === null &&
+          !settings &&
+          !subjectsOpen &&
+          !pendingImport && (
+            <div className="error-toast" role="alert">
+              <span>{error}</span>
+              <button onClick={() => setError("")} aria-label="Cerrar error">
+                <X size={16} />
+              </button>
+            </div>
           )}
-          <button onClick={() => setNotice("")} aria-label="Cerrar aviso">
-            <X size={15} />
-          </button>
-        </div>
-      )}
-    </div>
+        {notice && (
+          <div className="toast" role="status">
+            <Check size={17} />
+            {notice}
+            {deletedEntry && notice === "Apunte eliminado." && (
+              <button
+                onClick={() => {
+                  const { date, ...item } = deletedEntry;
+                  patchDay(date, (d) => ({
+                    ...d,
+                    entries: [...d.entries, item],
+                  }));
+                  setDeletedEntry(null);
+                  setNotice("Apunte recuperado.");
+                }}
+              >
+                Deshacer
+              </button>
+            )}
+            <button onClick={() => setNotice("")} aria-label="Cerrar aviso">
+              <X size={15} />
+            </button>
+          </div>
+        )}
+      </div>
+    </FeedbackContext.Provider>
   );
 }
 

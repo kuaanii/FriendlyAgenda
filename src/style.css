@@ -97,7 +97,8 @@ a:focus-visible {
   position: sticky;
   top: 0;
   height: 100vh;
-  min-height: 730px;
+  min-height: 0;
+  overflow-y: auto;
   background: var(--sidebar);
   border-right: 1px solid var(--line);
   padding: 32px 22px 18px;
@@ -1164,6 +1165,23 @@ input[type="color"] {
   max-width: 650px;
   line-height: 1.6;
 }
+.inline-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #c3654c;
+  border-radius: 7px;
+  padding: 12px;
+  color: #c3654c;
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 18px;
+}
+.inline-error button {
+  margin-left: auto;
+  display: flex;
+  color: inherit;
+}
 .loading {
   min-height: 100vh;
   background: var(--bg);
@@ -1369,5 +1387,13 @@ input[type="color"] {
   * {
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+}
+@media (max-height: 900px) {
+  .sidebar-note {
+    display: none;
+  }
+  .sidebar-bottom {
+    margin-top: auto;
   }
 }

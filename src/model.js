@@ -21,6 +21,25 @@ export function emptyAgenda() {
     theme: "light",
   };
 }
+const blockTypes = [
+  "paragraph",
+  "heading",
+  "bulletList",
+  "orderedList",
+  "blockquote",
+  "horizontalRule",
+  "codeBlock",
+];
+const inlineTypes = ["text", "hardBreak"];
+function safeColor(value) {
+  return (
+    typeof value === "string" &&
+    value.length <= 120 &&
+    /^(?:#[0-9a-f]{3,8}|[a-z]+|(?:rgb|rgba|hsl|hsla|hwb|lab|lch|oklab|oklch|color)\([a-z0-9.%+,/ -]+\))$/i.test(
+      value,
+    )
+  );
+}
 function validDocument(node, depth = 0) {
   const types = [
     "doc",
@@ -36,7 +55,42 @@ function validDocument(node, depth = 0) {
     "codeBlock",
   ];
   if (!node || depth > 40 || !types.includes(node.type)) return false;
-  if (node.text !== undefined && typeof node.text !== "string") return false;
+  if (
+    node.type === "text"
+      ? typeof node.text !== "string" || !node.text
+      : node.text !== undefined
+  )
+    return false;
+  const children = node.content || [];
+  if (!Array.isArray(children)) return false;
+  if (node.type === "doc" || node.type === "blockquote") {
+    if (
+      !children.length ||
+      !children.every((child) => blockTypes.includes(child?.type))
+    )
+      return false;
+  } else if (node.type === "paragraph" || node.type === "heading") {
+    if (!children.every((child) => inlineTypes.includes(child?.type)))
+      return false;
+  } else if (node.type === "bulletList" || node.type === "orderedList") {
+    if (
+      !children.length ||
+      !children.every((child) => child?.type === "listItem")
+    )
+      return false;
+  } else if (node.type === "listItem") {
+    if (
+      children[0]?.type !== "paragraph" ||
+      !children.every((child) => blockTypes.includes(child?.type))
+    )
+      return false;
+  } else if (node.type === "codeBlock") {
+    if (
+      !children.every((child) => child?.type === "text" && !child.marks?.length)
+    )
+      return false;
+  } else if (children.length) return false;
+  if (!inlineTypes.includes(node.type) && node.marks?.length) return false;
   if (
     node.content !== undefined &&
     (!Array.isArray(node.content) ||
@@ -58,7 +112,10 @@ function validDocument(node, depth = 0) {
           ].includes(m.type) &&
           (!m.attrs ||
             Object.entries(m.attrs).every(
-              ([k, v]) => k === "color" && /^#[0-9a-f]{6}$/i.test(v),
+              ([k, v]) =>
+                m.type === "textStyle" &&
+                k === "color" &&
+                (v === null || safeColor(v)),
             )),
       ))
   )
@@ -67,9 +124,18 @@ function validDocument(node, depth = 0) {
     node.attrs &&
     !Object.entries(node.attrs).every(
       ([k, v]) =>
-        (k === "level" && Number.isInteger(v) && v >= 1 && v <= 6) ||
-        (k === "start" && Number.isInteger(v)) ||
-        (k === "language" && (v === null || typeof v === "string")),
+        (node.type === "heading" &&
+          k === "level" &&
+          Number.isInteger(v) &&
+          v >= 1 &&
+          v <= 6) ||
+        (node.type === "orderedList" && k === "start" && Number.isInteger(v)) ||
+        (node.type === "orderedList" &&
+          k === "type" &&
+          [null, "1", "a", "A", "i", "I"].includes(v)) ||
+        (node.type === "codeBlock" &&
+          k === "language" &&
+          (v === null || typeof v === "string")),
     )
   )
     return false;
@@ -107,7 +173,9 @@ export function validateAgenda(data) {
       new Date(date).toISOString().slice(0, 10) !== date ||
       !day ||
       !Array.isArray(day.entries) ||
-      (day.note && (day.note.type !== "doc" || !validDocument(day.note)))
+      !day.note ||
+      day.note.type !== "doc" ||
+      !validDocument(day.note)
     )
       throw new Error("Contenido de agenda no válido.");
     const entryIds = new Set();
@@ -128,11 +196,17 @@ export function validateAgenda(data) {
   }
   return data;
 }
-export const encodeBackup = (data) =>
-  JSON.stringify(validateAgenda(data), null, 2);
-export function decodeBackup(text) {
-  if (text.length > 20 * 1024 * 1024)
+function checkBackupSize(text) {
+  if (new TextEncoder().encode(text).byteLength > 20 * 1024 * 1024)
     throw new Error("La copia supera el límite de 20 MB.");
+}
+export function encodeBackup(data) {
+  const text = JSON.stringify(validateAgenda(data), null, 2);
+  checkBackupSize(text);
+  return text;
+}
+export function decodeBackup(text) {
+  checkBackupSize(text);
   return validateAgenda(JSON.parse(text));
 }
 export function noteText(note) {
