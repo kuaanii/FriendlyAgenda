@@ -12,11 +12,12 @@ export function today() {
 export function emptyAgenda() {
   return {
     version: 1,
+    locale: "en",
     days: {},
     subjects: [
-      { id: "math", name: "Matemáticas", color: "#9c82c8" },
-      { id: "language", name: "Lengua", color: "#d99a63" },
-      { id: "science", name: "Ciencias", color: "#78a88b" },
+      { id: "math", name: "Mathematics", color: "#9c82c8" },
+      { id: "language", name: "Language", color: "#d99a63" },
+      { id: "science", name: "Science", color: "#78a88b" },
     ],
     theme: "light",
   };
@@ -149,7 +150,8 @@ export function validateAgenda(data) {
     typeof data.days !== "object" ||
     Array.isArray(data.days) ||
     !Array.isArray(data.subjects) ||
-    !["light", "dark"].includes(data.theme)
+    !["light", "dark"].includes(data.theme) ||
+    (data.locale !== undefined && !["en", "es", "fr"].includes(data.locale))
   )
     throw new Error("El archivo no es una copia válida de FriendlyAgenda.");
   const ids = new Set();

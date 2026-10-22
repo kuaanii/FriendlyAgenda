@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { _electron as electron } from "@playwright/test";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join, resolve, sep } from "node:path";
 
 test(
   "la aplicación de escritorio guarda en disco y vuelve a abrir sin red",
@@ -25,8 +25,11 @@ test(
       const errors = [];
       page.on("pageerror", (e) => errors.push(e.message));
       await page
-        .getByRole("heading", { name: "Haz sitio a lo importante." })
+        .getByRole("heading", { name: "Make room for what matters." })
         .waitFor();
+      await page
+        .getByRole("combobox", { name: "Language", exact: true })
+        .selectOption("es");
       const updateState = await page.evaluate(() =>
         window.agenda.checkUpdates(),
       );
@@ -142,11 +145,24 @@ test(
         .getByRole("status")
         .filter({ hasText: "Todo guardado" })
         .waitFor();
+      if (process.platform === "darwin") {
+        const newWindow = app.waitForEvent("window");
+        await app.evaluate(({ app, BrowserWindow }) => {
+          BrowserWindow.getAllWindows()[0].close();
+          app.emit("activate");
+        });
+        page = await newWindow;
+        await page.locator(".language-picker select").waitFor();
+        assert.equal(
+          await page.locator(".language-picker select").inputValue(),
+          "es",
+        );
+      }
     } finally {
       if (app) await app.close();
       assert.ok(
         resolve(userData).startsWith(
-          resolve(tmpdir()) + "\\friendly-agenda-desktop-",
+          resolve(tmpdir()) + sep + "friendly-agenda-desktop-",
         ),
       );
       await rm(userData, { recursive: true, force: true });

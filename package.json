@@ -1,6 +1,6 @@
 {
   "name": "friendly-agenda",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/kuaanii/FriendlyAgenda.git"
@@ -19,7 +19,9 @@
     "test:ui": "playwright test",
     "format:check": "prettier --check src electron tests build/*.cjs *.js *.json",
     "test:desktop": "node --test tests/desktop/*.test.js",
-    "audit:publication": "node scripts/audit-publication.cjs"
+    "audit:publication": "node scripts/audit-publication.cjs",
+    "pack:win": "vite build && electron-builder --win portable --x64",
+    "pack:mac": "vite build && electron-builder --mac dmg --publish never"
   },
   "build": {
     "appId": "org.friendlyagenda.desktop",
@@ -32,7 +34,9 @@
       "electron/**/*",
       "src/model.js",
       "package.json",
-      "build/icon.png"
+      "build/icon.png",
+      "src/i18n.js",
+      "src/locales/*.json"
     ],
     "win": {
       "target": "portable",
@@ -43,7 +47,32 @@
     "portable": {
       "artifactName": "FriendlyAgenda-${version}-Windows.exe"
     },
-    "electronDist": "node_modules/electron/dist"
+    "electronDist": "node_modules/electron/dist",
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.png",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "notarize": false,
+      "artifactName": "FriendlyAgenda-${version}-macOS-${arch}.dmg"
+    },
+    "dmg": {
+      "title": "FriendlyAgenda ${version}",
+      "contents": [
+        {
+          "x": 150,
+          "y": 180,
+          "type": "file"
+        },
+        {
+          "x": 430,
+          "y": 180,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    }
   },
   "devDependencies": {
     "@tiptap/extension-placeholder": "^3.32.0",

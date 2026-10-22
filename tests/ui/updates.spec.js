@@ -32,6 +32,7 @@ test("avisa de la nueva versión al abrir y descarga solo cuando el usuario lo e
 }) => {
   await mockDesktop(page, "available");
   await page.goto("/");
+  await page.locator(".language-picker select").selectOption("es");
   await expect(
     page.getByRole("heading", { name: "Hay una nueva versión" }),
   ).toBeVisible();
@@ -49,6 +50,7 @@ test("la comprobación manual detecta una nueva versión sin cerrar la agenda", 
 }) => {
   await mockDesktop(page, "manual");
   await page.goto("/");
+  await page.locator(".language-picker select").selectOption("es");
   await page.getByRole("button", { name: "Mi espacio", exact: true }).click();
   await page
     .getByRole("button", { name: "Buscar actualizaciones", exact: true })
@@ -66,6 +68,7 @@ test("sin conexión se puede seguir escribiendo y se explica el estado de las ac
 }) => {
   await mockDesktop(page, "offline");
   await page.goto("/");
+  await page.locator(".language-picker select").selectOption("es");
   await page
     .getByRole("textbox", { name: /Notas del/ })
     .first()
@@ -82,6 +85,7 @@ test("el recordatorio vuelve en la siguiente comprobación periódica aunque la 
   await page.clock.pauseAt(new Date("2026-10-22T11:00:00Z"));
   await mockDesktop(page, "periodic");
   await page.goto("/");
+  await page.locator(".language-picker select").selectOption("es");
   await page.clock.runFor(1100);
   await expect(
     page.getByRole("heading", { name: "Hay una nueva versión" }),

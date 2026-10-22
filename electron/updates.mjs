@@ -22,10 +22,23 @@ function newerRelease(release, currentVersion) {
   const version = next.join(".");
   return version;
 }
-export function releaseUpdate(release, currentVersion) {
+export function releaseAssetName(version, platform = "win32", arch = "x64") {
+  if (platform === "win32" && arch === "x64")
+    return `FriendlyAgenda-${version}-Windows.exe`;
+  if (platform === "darwin" && ["arm64", "x64"].includes(arch))
+    return `FriendlyAgenda-${version}-macOS-${arch}.dmg`;
+  return null;
+}
+export function releaseUpdate(
+  release,
+  currentVersion,
+  platform = "win32",
+  arch = "x64",
+) {
   const version = newerRelease(release, currentVersion);
   if (!version) return null;
-  const expectedName = `FriendlyAgenda-${version}-Windows.exe`;
+  const expectedName = releaseAssetName(version, platform, arch);
+  if (!expectedName) return null;
   const expectedDownload = `${RELEASES_URL}/download/${release.tag_name}/${expectedName}`;
   const asset =
     Array.isArray(release.assets) &&
@@ -39,6 +52,8 @@ export function releaseUpdate(release, currentVersion) {
 }
 export function createUpdateChecker({
   currentVersion,
+  platform = process.platform,
+  arch = process.arch,
   request = fetch,
   now = Date.now,
 }) {
@@ -72,7 +87,9 @@ export function createUpdateChecker({
     const candidate = { tag_name: tag, draft: false, prerelease: false };
     const version = newerRelease(candidate, currentVersion);
     if (!version) return { status: "current" };
-    const url = `${RELEASES_URL}/download/${tag}/FriendlyAgenda-${version}-Windows.exe`;
+    const name = releaseAssetName(version, platform, arch);
+    if (!name) return { status: "no-download" };
+    const url = `${RELEASES_URL}/download/${tag}/${name}`;
     const asset = await request(url, {
       ...options,
       signal: AbortSignal.timeout(8000),
@@ -129,7 +146,7 @@ export function createUpdateChecker({
         offset += chunk.byteLength;
       }
       const release = JSON.parse(new TextDecoder().decode(bytes));
-      const update = releaseUpdate(release, currentVersion);
+      const update = releaseUpdate(release, currentVersion, platform, arch);
       return update
         ? { status: "available", update }
         : {

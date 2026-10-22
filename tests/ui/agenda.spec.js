@@ -4,6 +4,7 @@ test("crear, completar, escribir con formato y conservar al volver a abrir", asy
   page,
 }) => {
   await page.goto("/");
+  await page.locator(".language-picker select").selectOption("es");
   await expect(
     page.getByRole("heading", { name: "Haz sitio a lo importante." }),
   ).toBeVisible();
@@ -51,6 +52,7 @@ test("navegar cuatro días, volver a hoy y cambiar de tema", async ({
   page,
 }) => {
   await page.goto("/");
+  await page.locator(".language-picker select").selectOption("es");
   const first = await page.locator(".day-number").first().innerText();
   await page.getByRole("button", { name: "Cuatro días siguientes" }).click();
   await expect(page.locator(".day-number").first()).not.toHaveText(first);
@@ -63,6 +65,7 @@ test("navegar cuatro días, volver a hoy y cambiar de tema", async ({
 });
 test("capturas de ambos temas y ventana compacta", async ({ page }) => {
   await page.goto("/");
+  await page.locator(".language-picker select").selectOption("es");
   await expect(page.getByRole("status").first()).toHaveText("Todo guardado");
   await page.screenshot({
     path: "docs/screenshots/agenda-clara.png",
@@ -88,6 +91,7 @@ test("color, subrayado y listas se conservan al exportar y restaurar", async ({
   page,
 }) => {
   await page.goto("/");
+  await page.locator(".language-picker select").selectOption("es");
   const editor = page.getByRole("textbox", { name: /Notas del/ }).first();
   await editor.click();
   await page.getByRole("button", { name: "Subrayado", exact: true }).click();
@@ -133,6 +137,7 @@ test("las listas numeradas y los colores pegados se guardan", async ({
   page,
 }) => {
   await page.goto("/");
+  await page.locator(".language-picker select").selectOption("es");
   const editor = page.getByRole("textbox", { name: /Notas del/ }).first();
   await editor.click();
   await editor.evaluate((element) => {
@@ -168,6 +173,7 @@ test("los errores de una copia inválida aparecen dentro del diálogo", async ({
   page,
 }) => {
   await page.goto("/");
+  await page.locator(".language-picker select").selectOption("es");
   await page.getByRole("button", { name: "Mi espacio", exact: true }).click();
   const chooser = page.waitForEvent("filechooser");
   await page.getByRole("button", { name: /Restaurar una copia/ }).click();

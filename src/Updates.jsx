@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Download, RefreshCw } from "lucide-react";
 import { bridge } from "./bridge.js";
+import { useI18n } from "./I18n.jsx";
 import { version } from "../package.json";
 
 export function useUpdates() {
@@ -66,6 +67,7 @@ export function useUpdates() {
   };
 }
 export function UpdateSettings({ updates }) {
+  const { t } = useI18n();
   const messages = {
     current: "Tienes la última versión estable disponible.",
     unavailable:
@@ -78,8 +80,8 @@ export function UpdateSettings({ updates }) {
   return (
     <section className="update-settings">
       <div>
-        <strong>Actualizaciones</strong>
-        <small>Versión instalada: {version}</small>
+        <strong>{t("Actualizaciones")}</strong>
+        <small>{t("Versión instalada: {version}", { version })}</small>
       </div>
       <button
         className="secondary-button"
@@ -87,47 +89,54 @@ export function UpdateSettings({ updates }) {
         onClick={() => updates.check(true)}
       >
         <RefreshCw size={14} />
-        {updates.checking ? "Comprobando…" : "Buscar actualizaciones"}
+        {updates.checking ? t("Comprobando…") : t("Buscar actualizaciones")}
       </button>
       <p role="status">
         {updates.result?.status === "available"
-          ? `La versión ${updates.result.update.version} está disponible.`
-          : messages[updates.result?.status] ||
-            "Se comprueban al abrir la aplicación y cada seis horas."}
+          ? t("La versión {version} está disponible.", {
+              version: updates.result.update.version,
+            })
+          : t(
+              messages[updates.result?.status] ||
+                "Se comprueban al abrir la aplicación y cada seis horas.",
+            )}
       </p>
       {updates.result?.status === "available" && (
         <button className="primary-button" onClick={updates.download}>
-          <Download size={15} /> Descargar actualización
+          <Download size={15} /> {t("Descargar actualización")}
         </button>
       )}
-      {updates.error && <p role="alert">{updates.error}</p>}
+      {updates.error && <p role="alert">{t(updates.error)}</p>}
     </section>
   );
 }
 export function UpdatePrompt({ updates, Modal }) {
+  const { t } = useI18n();
   if (!updates.prompt || updates.result?.status !== "available") return null;
   return (
-    <Modal title="Hay una nueva versión" onClose={updates.dismiss}>
+    <Modal title={t("Hay una nueva versión")} onClose={updates.dismiss}>
       <p className="modal-description">
-        FriendlyAgenda {updates.result.update.version} ya está disponible en
-        GitHub. Tienes instalada la versión {version}. ¿Quieres descargar la
-        actualización?
+        {t("updatePrompt", {
+          next: updates.result.update.version,
+          current: version,
+        })}
       </p>
       <p className="modal-description">
-        Se abrirá la descarga oficial en tu navegador. Tus datos permanecen en
-        este ordenador.
+        {t(
+          "Se abrirá la descarga oficial en tu navegador. Tus datos permanecen en este ordenador.",
+        )}
       </p>
       {updates.error && (
         <p className="inline-error" role="alert">
-          {updates.error}
+          {t(updates.error)}
         </p>
       )}
       <div className="modal-actions">
         <button className="secondary-button" onClick={updates.dismiss}>
-          Ahora no
+          {t("Ahora no")}
         </button>
         <button className="primary-button" onClick={updates.download}>
-          <Download size={16} /> Descargar nueva versión
+          <Download size={16} /> {t("Descargar nueva versión")}
         </button>
       </div>
     </Modal>

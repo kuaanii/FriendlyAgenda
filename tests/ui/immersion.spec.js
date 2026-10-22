@@ -4,6 +4,7 @@ test("el menú lateral se oculta y se recupera sin cambiar la agenda", async ({
   page,
 }) => {
   await page.goto("/");
+  await page.locator(".language-picker select").selectOption("es");
   await page
     .getByRole("button", { name: "Ocultar menú lateral", exact: true })
     .click();
@@ -26,6 +27,7 @@ test("la agenda ocupa la ventana y se puede volver a la página principal", asyn
   page,
 }) => {
   await page.goto("/");
+  await page.locator(".language-picker select").selectOption("es");
   const initial = await page.locator(".book").boundingBox();
   const editor = page.getByRole("textbox", { name: /Notas del/ }).first();
   await editor.fill("Una nota que permanece al ampliar.");
@@ -67,6 +69,7 @@ test("sin barras visibles y con notas largas accesibles en ventana compacta", as
 }) => {
   await page.setViewportSize({ width: 1000, height: 720 });
   await page.goto("/");
+  await page.locator(".language-picker select").selectOption("es");
   expect(
     await page
       .locator("html")

@@ -7,7 +7,10 @@ const sharp = require(process.env.SHARP_PATH || "sharp");
     .resize(256, 256)
     .png()
     .toBuffer();
-  await fs.writeFile(path.join(__dirname, "icon.png"), png);
+  await sharp(path.join(__dirname, "icon.svg"))
+    .resize(1024, 1024)
+    .png()
+    .toFile(path.join(__dirname, "icon.png"));
   const header = Buffer.alloc(22);
   header.writeUInt16LE(1, 2);
   header.writeUInt16LE(1, 4);

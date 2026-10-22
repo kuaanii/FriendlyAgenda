@@ -1,0 +1,62 @@
+name: Desktop builds
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: Windows
+            arch: x64
+            package: pnpm pack:win
+          - os: macos-15
+            platform: macOS
+            arch: arm64
+            package: pnpm pack:mac
+          - os: macos-15-intel
+            platform: macOS
+            arch: x64
+            package: pnpm pack:mac
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+      - run: npm install --global pnpm@11.25.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm exec playwright install chromium
+      - run: pnpm test:ui
+      - run: ${{ matrix.package }}
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - name: Test packaged desktop
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            export FRIENDLY_AGENDA_EXE="$GITHUB_WORKSPACE/release/mac${{ matrix.arch == 'arm64' && '-arm64' || '' }}/FriendlyAgenda.app/Contents/MacOS/FriendlyAgenda"
+            codesign --verify --deep --strict "$(dirname "$(dirname "$(dirname "$FRIENDLY_AGENDA_EXE")")")"
+          else
+            export FRIENDLY_AGENDA_EXE="$GITHUB_WORKSPACE/release/win-unpacked/FriendlyAgenda.exe"
+          fi
+          pnpm test:desktop
+      - run: pnpm audit:publication
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: FriendlyAgenda-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            release/FriendlyAgenda-*-Windows.exe
+            release/FriendlyAgenda-*-macOS-*.dmg
+          if-no-files-found: error
+          retention-days: 7

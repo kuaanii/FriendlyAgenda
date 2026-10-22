@@ -53,19 +53,15 @@ import {
 import { bridge } from "./bridge.js";
 import { useUpdates, UpdateSettings, UpdatePrompt } from "./Updates.jsx";
 import "./style.css";
+import { I18nProvider, useI18n, LanguagePicker } from "./I18n.jsx";
+import { translate, errorMessage } from "./i18n.js";
 
 const FeedbackContext = createContext(null);
 
-const dateLabel = (date, options) =>
-  new Intl.DateTimeFormat("es-ES", options).format(
-    new Date(`${date}T12:00:00`),
-  );
 const blankDay = () => ({
   note: { type: "doc", content: [{ type: "paragraph" }] },
   entries: [],
 });
-const shortDate = (date) =>
-  dateLabel(date, { day: "numeric", month: "short" }).replace(".", "");
 function IconButton({ label, children, ...props }) {
   return (
     <button className="icon-button" title={label} aria-label={label} {...props}>
@@ -75,6 +71,7 @@ function IconButton({ label, children, ...props }) {
 }
 
 function Modal({ title, children, onClose }) {
+  const { t, locale } = useI18n();
   const feedback = useContext(FeedbackContext);
   const ref = useRef(null);
   useEffect(() => {
@@ -92,14 +89,14 @@ function Modal({ title, children, onClose }) {
     >
       <div className="modal-heading">
         <h2>{title}</h2>
-        <IconButton label="Cerrar" onClick={onClose}>
+        <IconButton label={t("Cerrar")} onClick={onClose}>
           <X size={20} />
         </IconButton>
       </div>
       {feedback?.error && (
         <div className="inline-error" role="alert">
-          <span>{feedback.error}</span>
-          <button aria-label="Cerrar error" onClick={feedback.dismiss}>
+          <span>{errorMessage(locale, feedback.error)}</span>
+          <button aria-label={t("Cerrar error")} onClick={feedback.dismiss}>
             <X size={16} />
           </button>
         </div>
@@ -110,6 +107,7 @@ function Modal({ title, children, onClose }) {
 }
 
 function MiniCalendar({ start, onSelect }) {
+  const { t, dateLabel } = useI18n();
   const [month, setMonth] = useState(start.slice(0, 7) + "-01");
   useEffect(() => setMonth(start.slice(0, 7) + "-01"), [start]);
   const offset = (new Date(`${month}T12:00:00`).getDay() + 6) % 7;
@@ -128,16 +126,18 @@ function MiniCalendar({ start, onSelect }) {
       <div className="calendar-heading">
         <strong>{dateLabel(month, { month: "long", year: "numeric" })}</strong>
         <span>
-          <IconButton label="Mes anterior" onClick={() => move(-1)}>
+          <IconButton label={t("Mes anterior")} onClick={() => move(-1)}>
             <ChevronLeft size={15} />
           </IconButton>
-          <IconButton label="Mes siguiente" onClick={() => move(1)}>
+          <IconButton label={t("Mes siguiente")} onClick={() => move(1)}>
             <ChevronRight size={15} />
           </IconButton>
         </span>
       </div>
       <div className="calendar-grid">
-        {["L", "M", "X", "J", "V", "S", "D"].map((d, i) => (
+        {Array.from({ length: 7 }, (_, i) =>
+          dateLabel(addDays("2026-01-05", i), { weekday: "narrow" }),
+        ).map((d, i) => (
           <span className="weekday" key={i}>
             {d}
           </span>
@@ -159,20 +159,27 @@ function MiniCalendar({ start, onSelect }) {
 }
 
 function Day({ date, day, subjects, onChange, onEdit, onActive, filter }) {
+  const { t, locale, dateLabel } = useI18n();
+  const localeRef = useRef(locale);
+  localeRef.current = locale;
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ link: false }),
       TextStyle,
       Color,
       Placeholder.configure({
-        placeholder: "Este espacio es tuyo. Empieza a escribir…",
+        placeholder: () =>
+          translate(
+            localeRef.current,
+            "Este espacio es tuyo. Empieza a escribir…",
+          ),
       }),
     ],
     content: day.note,
     shouldRerenderOnTransaction: true,
     editorProps: {
       attributes: {
-        "aria-label": `Notas del ${date}`,
+        "aria-label": t("Notas del {date}", { date }),
         role: "textbox",
         "aria-multiline": "true",
       },
@@ -182,6 +189,19 @@ function Day({ date, day, subjects, onChange, onEdit, onActive, filter }) {
     onFocus: ({ editor: e }) => onActive(e),
     onSelectionUpdate: ({ editor: e }) => onActive(e),
   });
+  useEffect(() => {
+    if (!editor) return;
+    editor.setOptions({
+      editorProps: {
+        attributes: {
+          "aria-label": t("Notas del {date}", { date }),
+          role: "textbox",
+          "aria-multiline": "true",
+        },
+      },
+    });
+    editor.view.dispatch(editor.state.tr);
+  }, [editor, locale, date]);
   const visible = day.entries.filter((e) => !filter || e.subject === filter);
   return (
     <section className={`day ${date === today() ? "is-today" : ""}`}>
@@ -194,13 +214,13 @@ function Day({ date, day, subjects, onChange, onEdit, onActive, filter }) {
           <h2>{dateLabel(date, { weekday: "long" })}</h2>
           <span className="day-subtitle">
             {date === today()
-              ? "UN NUEVO DÍA, A TU RITMO"
+              ? t("UN NUEVO DÍA, A TU RITMO")
               : dateLabel(date, { month: "long", year: "numeric" })}
           </span>
         </div>
-        {date === today() && <span className="today-chip">Hoy</span>}
+        {date === today() && <span className="today-chip">{t("Hoy")}</span>}
         <IconButton
-          label={`Añadir apunte al ${date}`}
+          label={t("Añadir apunte al {date}", { date })}
           onClick={() => onEdit({ date, type: "homework" })}
         >
           <Plus size={18} />
@@ -217,7 +237,7 @@ function Day({ date, day, subjects, onChange, onEdit, onActive, filter }) {
             >
               <button
                 className="entry-check"
-                aria-label={`${entry.done ? "Marcar pendiente" : "Completar"}: ${entry.title}`}
+                aria-label={`${entry.done ? t("Marcar pendiente") : t("Completar")}: ${entry.title}`}
                 aria-pressed={entry.done}
                 onClick={() =>
                   onChange(date, (d) => ({
@@ -240,7 +260,7 @@ function Day({ date, day, subjects, onChange, onEdit, onActive, filter }) {
               >
                 <span>{entry.title}</span>
                 <small>
-                  {entry.type === "exam" ? "Examen" : "Deber"}
+                  {entry.type === "exam" ? t("Examen") : t("Deber")}
                   {s ? ` · ${s.name}` : ""}
                 </small>
               </button>
@@ -253,13 +273,14 @@ function Day({ date, day, subjects, onChange, onEdit, onActive, filter }) {
         className="add-entry"
         onClick={() => onEdit({ date, type: "homework" })}
       >
-        <Plus size={14} /> Añadir deber o examen
+        <Plus size={14} /> {t("Añadir deber o examen")}
       </button>
     </section>
   );
 }
 
 function Toolbar({ editor }) {
+  const { t } = useI18n();
   const [, refresh] = useState(0);
   useEffect(() => {
     if (!editor) return;
@@ -271,8 +292,8 @@ function Toolbar({ editor }) {
     if (editor && !editor.isDestroyed) fn(editor.chain().focus()).run();
   };
   return (
-    <div className="format-toolbar" aria-label="Formato del documento">
-      <span className="toolbar-label">Texto</span>
+    <div className="format-toolbar" aria-label={t("Formato del documento")}>
+      <span className="toolbar-label">{t("Texto")}</span>
       <span className="tool-divider" />
       {[
         [Bold, "Negrita", "bold", (c) => c.toggleBold()],
@@ -281,7 +302,7 @@ function Toolbar({ editor }) {
       ].map(([Icon, label, mark, fn]) => (
         <IconButton
           key={mark}
-          label={label}
+          label={t(label)}
           disabled={!editor}
           aria-pressed={editor?.isActive(mark) || false}
           onMouseDown={(e) => e.preventDefault()}
@@ -290,11 +311,11 @@ function Toolbar({ editor }) {
           <Icon size={16} />
         </IconButton>
       ))}
-      <label className="text-color" title="Color del texto">
+      <label className="text-color" title={t("Color del texto")}>
         <span>A</span>
         <input
           type="color"
-          aria-label="Color del texto"
+          aria-label={t("Color del texto")}
           value={
             /^#[0-9a-f]{6}$/i.test(
               editor?.getAttributes("textStyle").color || "",
@@ -308,7 +329,7 @@ function Toolbar({ editor }) {
       </label>
       <span className="tool-divider" />
       <IconButton
-        label="Lista con viñetas"
+        label={t("Lista con viñetas")}
         disabled={!editor}
         aria-pressed={editor?.isActive("bulletList") || false}
         onMouseDown={(e) => e.preventDefault()}
@@ -317,7 +338,7 @@ function Toolbar({ editor }) {
         <List size={18} />
       </IconButton>
       <IconButton
-        label="Lista numerada"
+        label={t("Lista numerada")}
         disabled={!editor}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => run((c) => c.toggleOrderedList())}
@@ -326,7 +347,7 @@ function Toolbar({ editor }) {
       </IconButton>
       <span className="tool-divider" />
       <IconButton
-        label="Deshacer texto"
+        label={t("Deshacer texto")}
         disabled={!editor}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => run((c) => c.undo())}
@@ -334,19 +355,22 @@ function Toolbar({ editor }) {
         <Undo2 size={16} />
       </IconButton>
       <IconButton
-        label="Rehacer texto"
+        label={t("Rehacer texto")}
         disabled={!editor}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => run((c) => c.redo())}
       >
         <Redo2 size={16} />
       </IconButton>
-      <span className="toolbar-hint">Las ideas empiezan con una línea.</span>
+      <span className="toolbar-hint">
+        {t("Las ideas empiezan con una línea.")}
+      </span>
     </div>
   );
 }
 
 function EntryForm({ entry, subjects, onSave, onDelete, onClose }) {
+  const { t } = useI18n();
   const [value, setValue] = useState({
     id: crypto.randomUUID(),
     title: "",
@@ -356,7 +380,7 @@ function EntryForm({ entry, subjects, onSave, onDelete, onClose }) {
   });
   return (
     <Modal
-      title={entry.id ? "Editar apunte" : "Algo que recordar"}
+      title={entry.id ? t("Editar apunte") : t("Algo que recordar")}
       onClose={onClose}
     >
       <form
@@ -366,19 +390,19 @@ function EntryForm({ entry, subjects, onSave, onDelete, onClose }) {
         }}
       >
         <label>
-          ¿Qué tienes en mente?
+          {t("¿Qué tienes en mente?")}
           <input
             autoFocus
             required
             maxLength={300}
-            placeholder="Por ejemplo, repasar el tema 3"
+            placeholder={t("Por ejemplo, repasar el tema 3")}
             value={value.title}
             onChange={(e) => setValue({ ...value, title: e.target.value })}
           />
         </label>
         <div className="form-row">
           <label>
-            Fecha
+            {t("Fecha")}
             <input
               required
               type="date"
@@ -389,23 +413,23 @@ function EntryForm({ entry, subjects, onSave, onDelete, onClose }) {
             />
           </label>
           <label>
-            Tipo
+            {t("Tipo")}
             <select
               value={value.type}
               onChange={(e) => setValue({ ...value, type: e.target.value })}
             >
-              <option value="homework">Deber</option>
-              <option value="exam">Examen</option>
+              <option value="homework">{t("Deber")}</option>
+              <option value="exam">{t("Examen")}</option>
             </select>
           </label>
         </div>
         <label>
-          Asignatura
+          {t("Asignatura")}
           <select
             value={value.subject}
             onChange={(e) => setValue({ ...value, subject: e.target.value })}
           >
-            <option value="">Sin asignatura</option>
+            <option value="">{t("Sin asignatura")}</option>
             {subjects.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -420,14 +444,14 @@ function EntryForm({ entry, subjects, onSave, onDelete, onClose }) {
               type="button"
               onClick={() => onDelete(entry)}
             >
-              <Trash2 size={16} /> Eliminar
+              <Trash2 size={16} /> {t("Eliminar")}
             </button>
           )}
           <button className="secondary-button" type="button" onClick={onClose}>
-            Cancelar
+            {t("Cancelar")}
           </button>
           <button className="primary-button" disabled={!value.title.trim()}>
-            Guardar apunte <ArrowRight size={16} />
+            {t("Guardar apunte")} <ArrowRight size={16} />
           </button>
         </footer>
       </form>
@@ -436,6 +460,7 @@ function EntryForm({ entry, subjects, onSave, onDelete, onClose }) {
 }
 
 function App() {
+  const { t, locale, setLocale, dateLabel, shortDate } = useI18n();
   const updates = useUpdates();
   const [data, setData] = useState(null),
     [loadError, setLoadError] = useState(""),
@@ -464,6 +489,7 @@ function App() {
       .load()
       .then(({ data, warning }) => {
         setData(data);
+        setLocale(data.locale || "en");
         setNotice(warning || "");
         ready.current = true;
       })
@@ -482,7 +508,7 @@ function App() {
       .catch((e) => {
         if (revision.current === r) {
           setStatus("Error al guardar");
-          setError(e.message);
+          setError(e.message || "operationError");
         }
       });
   }, [data]);
@@ -508,22 +534,22 @@ function App() {
     return (
       <main className="loading">
         <BookOpen size={40} />
-        <h1>No hemos podido abrir tu agenda</h1>
-        <p>{loadError}</p>
+        <h1>{t("No hemos podido abrir tu agenda")}</h1>
+        <p>{errorMessage(locale, loadError)}</p>
         <button
           className="secondary-button"
           onClick={() => bridge.openFolder().catch((e) => setError(e.message))}
         >
-          Abrir carpeta de datos
+          {t("Abrir carpeta de datos")}
         </button>
-        {error && <p role="alert">{error}</p>}
+        {error && <p role="alert">{errorMessage(locale, error)}</p>}
       </main>
     );
   if (!data)
     return (
       <main className="loading">
         <BookOpen size={40} />
-        <p>Abriendo tu agenda…</p>
+        <p>{t("Abriendo tu agenda…")}</p>
       </main>
     );
   const dates = spreadDates(start);
@@ -574,7 +600,7 @@ function App() {
       if (await bridge.exportBackup(data))
         setNotice("Tu copia de seguridad está lista.");
     } catch (e) {
-      setError(e.message);
+      setError(e.message || "operationError");
     }
   }
   async function importData() {
@@ -586,7 +612,7 @@ function App() {
       const imported = await bridge.importBackup();
       if (imported) setPendingImport(imported);
     } catch (e) {
-      setError(e.message);
+      setError(e.message || "operationError");
     }
   }
   function saveEntry(value) {
@@ -619,13 +645,18 @@ function App() {
             </span>
             <span>
               friendly<span className="brand-light">agenda</span>
-              <small>TU DÍA, CON CALMA.</small>
+              <small>{t("TU DÍA, CON CALMA.")}</small>
             </span>
           </a>
           <button className="search-button" onClick={() => setSearch("")}>
             <Search size={17} />
-            <span>Buscar en tu agenda</span>
-            <kbd>Ctrl K</kbd>
+            <span>{t("Buscar en tu agenda")}</span>
+            <kbd>
+              {window.agenda?.platform === "darwin" ||
+              /Mac/.test(navigator.platform)
+                ? "⌘ K"
+                : "Ctrl K"}
+            </kbd>
           </button>
           <nav className="main-nav">
             <button
@@ -635,22 +666,24 @@ function App() {
                 navigate(today());
               }}
             >
-              <BookOpen size={18} /> Mi agenda <span className="nav-dot" />
+              <BookOpen size={18} /> {t("Mi agenda")}{" "}
+              <span className="nav-dot" />
             </button>
             <button
               onClick={() => {
                 setSettings(true);
               }}
             >
-              <FolderOpen size={18} /> Mi espacio <ArrowUpRight size={15} />
+              <FolderOpen size={18} /> {t("Mi espacio")}{" "}
+              <ArrowUpRight size={15} />
             </button>
           </nav>
           <MiniCalendar start={start} onSelect={navigate} />
           <section className="subject-section">
             <div className="section-heading">
-              <span>MIS ASIGNATURAS</span>
+              <span>{t("MIS ASIGNATURAS")}</span>
               <IconButton
-                label="Gestionar asignaturas"
+                label={t("Gestionar asignaturas")}
                 onClick={() => setSubjectsOpen(true)}
               >
                 <Plus size={15} />
@@ -660,7 +693,7 @@ function App() {
               className={`subject ${!filter ? "selected" : ""}`}
               onClick={() => setFilter("")}
             >
-              <span className="all-dot" /> Todas las asignaturas{" "}
+              <span className="all-dot" /> {t("Todas las asignaturas")}{" "}
               <span>{data.subjects.length}</span>
             </button>
             {data.subjects.map((s) => (
@@ -678,13 +711,13 @@ function App() {
           <section className="sidebar-note">
             <span className="little-star">✳</span>
             <h3>
-              Menos ruido.
+              {t("Menos ruido.")}
               <br />
-              Más espacio para ti.
+              {t("Más espacio para ti.")}
             </h3>
-            <p>Tus planes, tus ideas, tus pequeños grandes pasos.</p>
+            <p>{t("Tus planes, tus ideas, tus pequeños grandes pasos.")}</p>
             <span className="privacy-label">
-              <span /> Solo en tu ordenador
+              <span /> {t("Solo en tu ordenador")}
             </span>
           </section>
           <div className="sidebar-bottom">
@@ -697,10 +730,10 @@ function App() {
               }
             >
               {data.theme === "light" ? <Moon size={17} /> : <Sun size={17} />}{" "}
-              Tema {data.theme === "light" ? "oscuro" : "claro"}
+              {t(data.theme === "light" ? "Tema oscuro" : "Tema claro")}
             </button>
             <IconButton
-              label="Ajustes y copias de seguridad"
+              label={t("Ajustes y copias de seguridad")}
               onClick={() => setSettings(true)}
             >
               <Settings2 size={18} />
@@ -713,8 +746,8 @@ function App() {
               <IconButton
                 label={
                   sidebarHidden
-                    ? "Mostrar menú lateral"
-                    : "Ocultar menú lateral"
+                    ? t("Mostrar menú lateral")
+                    : t("Ocultar menú lateral")
                 }
                 aria-expanded={!sidebarHidden}
                 aria-controls="agenda-sidebar"
@@ -727,7 +760,7 @@ function App() {
                 )}
               </IconButton>
               <span>
-                <span className="tiny-dot" /> TU AGENDA PERSONAL
+                <span className="tiny-dot" /> {t("TU AGENDA PERSONAL")}
               </span>
             </div>
             <div className="topbar-right">
@@ -736,29 +769,29 @@ function App() {
                 role="status"
               >
                 <Check size={13} />
-                {status}
+                {t(status)}
               </span>
-              <span className="local-badge">LOCAL & PRIVADA</span>
+              <span className="local-badge">{t("LOCAL & PRIVADA")}</span>
             </div>
           </header>
           <div className="workspace">
             <section className="welcome">
               <div>
                 <p className="eyebrow">
-                  UN POCO DE ORDEN. UN MUNDO DE POSIBILIDADES.
+                  {t("UN POCO DE ORDEN. UN MUNDO DE POSIBILIDADES.")}
                 </p>
                 <h1>
-                  Haz sitio a lo <em>importante.</em>
+                  {t("Haz sitio a lo")} <em>{t("importante.")}</em>
                 </h1>
                 <p className="welcome-subtitle">
-                  Saca los planes de tu cabeza. Dales su propio espacio.
+                  {t("Saca los planes de tu cabeza. Dales su propio espacio.")}
                 </p>
               </div>
               <button
                 className="primary-button"
                 onClick={() => setEntry({ date: start, type: "homework" })}
               >
-                <Plus size={17} /> Nuevo apunte
+                <Plus size={17} /> {t("Nuevo apunte")}
               </button>
             </section>
             <section className="agenda-controls">
@@ -772,32 +805,38 @@ function App() {
                 </h2>
               </div>
               <div className="date-controls">
+                <LanguagePicker
+                  onChange={(locale) => {
+                    setLocale(locale);
+                    setData((previous) => ({ ...previous, locale }));
+                  }}
+                />
                 {immersive && (
                   <span
                     className={`focus-save ${status === "Error al guardar" ? "save-error" : ""}`}
                     role="status"
                   >
-                    {status}
+                    {t(status)}
                   </span>
                 )}
                 <button
                   className="today-button"
                   onClick={() => navigate(today())}
                 >
-                  Hoy
+                  {t("Hoy")}
                 </button>
                 <span className="date-range">
                   {shortDate(start)} — {shortDate(dates[3])}
                 </span>
                 <div className="pager">
                   <IconButton
-                    label="Cuatro días anteriores"
+                    label={t("Cuatro días anteriores")}
                     onClick={() => navigate(addDays(start, -4))}
                   >
                     <ChevronLeft size={18} />
                   </IconButton>
                   <IconButton
-                    label="Cuatro días siguientes"
+                    label={t("Cuatro días siguientes")}
                     onClick={() => navigate(addDays(start, 4))}
                   >
                     <ChevronRight size={18} />
@@ -806,13 +845,13 @@ function App() {
                 <button
                   className="immersion-button"
                   aria-label={
-                    immersive ? "Salir del modo agenda" : "Ampliar agenda"
+                    immersive ? t("Salir del modo agenda") : t("Ampliar agenda")
                   }
                   aria-pressed={immersive}
                   title={
                     immersive
-                      ? "Salir del modo agenda (Esc)"
-                      : "La agenda, a toda ventana"
+                      ? t("Salir del modo agenda (Esc)")
+                      : t("La agenda, a toda ventana")
                   }
                   onClick={() => setImmersive((value) => !value)}
                 >
@@ -821,7 +860,7 @@ function App() {
                   ) : (
                     <Maximize2 size={16} />
                   )}
-                  <span>{immersive ? "Volver" : "Ampliar agenda"}</span>
+                  <span>{immersive ? t("Volver") : t("Ampliar agenda")}</span>
                 </button>
               </div>
             </section>
@@ -829,9 +868,11 @@ function App() {
               <Toolbar editor={active} />
               {filter && (
                 <div className="filter-banner">
-                  Apuntes de {data.subjects.find((s) => s.id === filter)?.name}
+                  {t("Apuntes de {name}", {
+                    name: data.subjects.find((s) => s.id === filter)?.name,
+                  })}
                   <button onClick={() => setFilter("")}>
-                    Mostrar todos <X size={13} />
+                    {t("Mostrar todos")} <X size={13} />
                   </button>
                 </div>
               )}
@@ -854,8 +895,8 @@ function App() {
                       <span>FRIENDLY AGENDA</span>
                       <span>
                         {i === 0
-                          ? "Un día a la vez."
-                          : "Lo estás haciendo bien."}
+                          ? t("Un día a la vez.")
+                          : t("Lo estás haciendo bien.")}
                       </span>
                     </div>
                   </div>
@@ -864,10 +905,13 @@ function App() {
             </div>
             <div className="under-book">
               <span>
-                <BookOpen size={14} /> Cuatro días. Todo tu espacio.
+                <BookOpen size={14} /> {t("Cuatro días. Todo tu espacio.")}
               </span>
               <span>
-                {done} de {total.length} apuntes completados{" "}
+                {t("{done} de {total} apuntes completados", {
+                  done,
+                  total: total.length,
+                })}{" "}
                 <span className="progress-track">
                   <i
                     style={{
@@ -880,7 +924,8 @@ function App() {
             <section className="upcoming-section">
               <div className="section-heading">
                 <h2>
-                  En el horizonte <span>Lo próximo, sin perder la calma.</span>
+                  {t("En el horizonte")}{" "}
+                  <span>{t("Lo próximo, sin perder la calma.")}</span>
                 </h2>
                 <ArrowUpRight size={18} />
               </div>
@@ -898,7 +943,7 @@ function App() {
                       <span className="upcoming-date">{shortDate(e.date)}</span>
                       <strong>{e.title}</strong>
                       <span>
-                        {e.type === "exam" ? "Examen" : "Deber"}{" "}
+                        {e.type === "exam" ? t("Examen") : t("Deber")}{" "}
                         <ArrowRight size={15} />
                       </span>
                     </button>
@@ -908,20 +953,21 @@ function App() {
                 <div className="empty-upcoming">
                   <Circle size={19} />
                   <span>
-                    Un horizonte despejado. Tus próximos deberes y exámenes
-                    aparecerán aquí.
+                    {t(
+                      "Un horizonte despejado. Tus próximos deberes y exámenes aparecerán aquí.",
+                    )}
                   </span>
                   <button
                     onClick={() => setEntry({ date: start, type: "exam" })}
                   >
-                    Añadir un plan <ArrowRight size={14} />
+                    {t("Añadir un plan")} <ArrowRight size={14} />
                   </button>
                 </div>
               )}
             </section>
             <footer className="main-footer">
-              <span>Hecha para tus días. A tu manera.</span>
-              <span>Sin cuentas. Sin nube. Solo tú.</span>
+              <span>{t("Hecha para tus días. A tu manera.")}</span>
+              <span>{t("Sin cuentas. Sin nube. Solo tú.")}</span>
             </footer>
           </div>
         </main>
@@ -943,22 +989,27 @@ function App() {
           />
         )}
         {search !== null && (
-          <Modal title="Encuentra ese apunte" onClose={() => setSearch(null)}>
+          <Modal
+            title={t("Encuentra ese apunte")}
+            onClose={() => setSearch(null)}
+          >
             <div className="search-field">
               <Search size={20} />
               <input
-                aria-label="Buscar texto"
+                aria-label={t("Buscar texto")}
                 autoFocus
-                placeholder="Un deber, un examen, una idea…"
+                placeholder={t("Un deber, un examen, una idea…")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
             <div className="search-results">
               {!search.trim() ? (
-                <p>Busca en tus notas, deberes, exámenes y asignaturas.</p>
+                <p>
+                  {t("Busca en tus notas, deberes, exámenes y asignaturas.")}
+                </p>
               ) : !results.length ? (
-                <p>No hay resultados para «{search}».</p>
+                <p>{t("No hay resultados para «{search}».", { search })}</p>
               ) : (
                 results.map((r, i) => (
                   <button
@@ -978,15 +1029,18 @@ function App() {
           </Modal>
         )}
         {subjectsOpen && (
-          <Modal title="Tus asignaturas" onClose={() => setSubjectsOpen(false)}>
+          <Modal
+            title={t("Tus asignaturas")}
+            onClose={() => setSubjectsOpen(false)}
+          >
             <p className="modal-description">
-              Un color para cada materia. Un lugar para cada idea.
+              {t("Un color para cada materia. Un lugar para cada idea.")}
             </p>
             <div className="subject-edit-list">
               {data.subjects.map((s) => (
                 <div key={s.id}>
                   <input
-                    aria-label={`Color de ${s.name}`}
+                    aria-label={t("Color de {name}", { name: s.name })}
                     type="color"
                     value={s.color}
                     onChange={(e) =>
@@ -999,7 +1053,7 @@ function App() {
                     }
                   />
                   <input
-                    aria-label={`Nombre de ${s.name}`}
+                    aria-label={t("Nombre de {name}", { name: s.name })}
                     value={s.name}
                     maxLength={60}
                     onChange={(e) => {
@@ -1034,23 +1088,24 @@ function App() {
                 setNewSubject("");
               }}
             >
-              <label>Nueva asignatura</label>
+              <label>{t("Nueva asignatura")}</label>
               <div className="new-subject">
                 <input
-                  aria-label="Color de nueva asignatura"
+                  aria-label={t("Color de nueva asignatura")}
                   type="color"
                   value={subjectColor}
                   onChange={(e) => setSubjectColor(e.target.value)}
                 />
                 <input
-                  aria-label="Nueva asignatura"
-                  placeholder="Nombre de la materia"
+                  aria-label={t("Nueva asignatura")}
+                  placeholder={t("Nombre de la materia")}
                   maxLength={60}
                   value={newSubject}
                   onChange={(e) => setNewSubject(e.target.value)}
                 />
                 <button
                   className="primary-button"
+                  aria-label={t("Nueva asignatura")}
                   disabled={!newSubject.trim()}
                 >
                   <Plus size={17} />
@@ -1060,25 +1115,33 @@ function App() {
           </Modal>
         )}
         {settings && (
-          <Modal title="Tu espacio, a salvo" onClose={() => setSettings(false)}>
+          <Modal
+            title={t("Tu espacio, a salvo")}
+            onClose={() => setSettings(false)}
+          >
             <p className="modal-description">
-              Tu agenda vive en este ordenador. Exporta una copia para guardarla
-              donde prefieras.
+              {t(
+                "Tu agenda vive en este ordenador. Exporta una copia para guardarla donde prefieras.",
+              )}
             </p>
             <div className="settings-actions">
               <button onClick={exportData}>
                 <Download size={21} />
                 <span>
-                  <strong>Exportar copia de seguridad</strong>
-                  <small>Incluye notas, formato, apuntes y asignaturas.</small>
+                  <strong>{t("Exportar copia de seguridad")}</strong>
+                  <small>
+                    {t("Incluye notas, formato, apuntes y asignaturas.")}
+                  </small>
                 </span>
                 <ArrowUpRight size={16} />
               </button>
               <button onClick={importData}>
                 <Upload size={21} />
                 <span>
-                  <strong>Restaurar una copia</strong>
-                  <small>Recupera una agenda desde un archivo JSON.</small>
+                  <strong>{t("Restaurar una copia")}</strong>
+                  <small>
+                    {t("Recupera una agenda desde un archivo JSON.")}
+                  </small>
                 </span>
                 <ArrowUpRight size={16} />
               </button>
@@ -1090,8 +1153,10 @@ function App() {
                 >
                   <FolderOpen size={21} />
                   <span>
-                    <strong>Abrir carpeta de datos</strong>
-                    <small>Archivo local y copia del guardado anterior.</small>
+                    <strong>{t("Abrir carpeta de datos")}</strong>
+                    <small>
+                      {t("Archivo local y copia del guardado anterior.")}
+                    </small>
                   </span>
                   <ArrowUpRight size={16} />
                 </button>
@@ -1101,7 +1166,11 @@ function App() {
               <BookOpen size={20} />
               <span>
                 FriendlyAgenda{" "}
-                <small>Versión {version} · Código abierto · Licencia MIT</small>
+                <small>
+                  {t("Versión {version} · Código abierto · Licencia MIT", {
+                    version,
+                  })}
+                </small>
               </span>
             </div>
             <UpdateSettings updates={updates} />
@@ -1114,21 +1183,23 @@ function App() {
           !pendingImport && <UpdatePrompt updates={updates} Modal={Modal} />}
         {pendingImport && (
           <Modal
-            title="Restaurar tu agenda"
+            title={t("Restaurar tu agenda")}
             onClose={() => setPendingImport(null)}
           >
             <p className="modal-description">
-              Esta copia sustituirá la agenda actual. Exporta primero tus
-              cambios si quieres conservarlos por separado.
+              {t(
+                "Esta copia sustituirá la agenda actual. Exporta primero tus cambios si quieres conservarlos por separado.",
+              )}
             </p>
             <div className="modal-actions">
               <button className="secondary-button" onClick={exportData}>
-                Exportar la actual
+                {t("Exportar la actual")}
               </button>
               <button
                 className="primary-button"
                 onClick={() => {
                   setData(pendingImport);
+                  setLocale(pendingImport.locale || "en");
                   setPendingImport(null);
                   setSettings(false);
                   setActive(null);
@@ -1137,7 +1208,7 @@ function App() {
                   setNotice("Copia restaurada. Tu agenda está de vuelta.");
                 }}
               >
-                Restaurar copia
+                {t("Restaurar copia")}
               </button>
             </div>
           </Modal>
@@ -1167,8 +1238,11 @@ function App() {
           !subjectsOpen &&
           !pendingImport && (
             <div className="error-toast" role="alert">
-              <span>{error}</span>
-              <button onClick={() => setError("")} aria-label="Cerrar error">
+              <span>{errorMessage(locale, error)}</span>
+              <button
+                onClick={() => setError("")}
+                aria-label={t("Cerrar error")}
+              >
                 <X size={16} />
               </button>
             </div>
@@ -1176,7 +1250,7 @@ function App() {
         {notice && (
           <div className="toast" role="status">
             <Check size={17} />
-            {notice}
+            {t(notice)}
             {deletedEntry && notice === "Apunte eliminado." && (
               <button
                 onClick={() => {
@@ -1189,10 +1263,13 @@ function App() {
                   setNotice("Apunte recuperado.");
                 }}
               >
-                Deshacer
+                {t("Deshacer")}
               </button>
             )}
-            <button onClick={() => setNotice("")} aria-label="Cerrar aviso">
+            <button
+              onClick={() => setNotice("")}
+              aria-label={t("Cerrar aviso")}
+            >
               <X size={15} />
             </button>
           </div>
@@ -1202,4 +1279,8 @@ function App() {
   );
 }
 
-createRoot(document.getElementById("root")).render(<App />);
+createRoot(document.getElementById("root")).render(
+  <I18nProvider>
+    <App />
+  </I18nProvider>,
+);

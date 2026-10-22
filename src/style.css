@@ -1,5 +1,5 @@
 :root {
-  font-family: "Segoe UI", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   color: #353831;
   background: #f4f3ee;
   font-synthesis: none;
@@ -1555,4 +1555,30 @@ input[type="color"] {
   .sidebar-bottom {
     margin-top: auto;
   }
+}
+.language-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 6px 8px;
+  flex-shrink: 0;
+}
+.language-picker select {
+  color: inherit;
+  background: transparent;
+  border: none;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  max-width: 95px;
+}
+.language-picker select option {
+  color: #28252e;
+  background: #fff;
+}
+.date-controls {
+  flex-wrap: wrap;
 }

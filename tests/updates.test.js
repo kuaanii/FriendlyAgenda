@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createUpdateChecker, releaseUpdate } from "../electron/updates.mjs";
+import {
+  createUpdateChecker as createChecker,
+  releaseUpdate,
+} from "../electron/updates.mjs";
+const createUpdateChecker = (options) =>
+  createChecker({ platform: "win32", arch: "x64", ...options });
 const release = (version = "0.4.0") => ({
   tag_name: `v${version}`,
   draft: false,
@@ -12,6 +17,61 @@ const release = (version = "0.4.0") => ({
       browser_download_url: `https://github.com/kuaanii/FriendlyAgenda/releases/download/v${version}/FriendlyAgenda-${version}-Windows.exe`,
     },
   ],
+});
+
+test("Mac updates select the native architecture and never offer the Windows binary", async () => {
+  const version = "0.4.0";
+  const candidate = release();
+  for (const arch of ["arm64", "x64"]) {
+    const name = `FriendlyAgenda-${version}-macOS-${arch}.dmg`;
+    candidate.assets.push({
+      name,
+      browser_download_url: `https://github.com/kuaanii/FriendlyAgenda/releases/download/v${version}/${name}`,
+    });
+  }
+  for (const arch of ["arm64", "x64"]) {
+    const checker = createUpdateChecker({
+      platform: "darwin",
+      arch,
+      currentVersion: "0.3.1",
+      request: async () => new Response(JSON.stringify(candidate)),
+    });
+    const result = await checker.check();
+    assert.equal(result.status, "available");
+    assert.ok(result.update.url.endsWith(`macOS-${arch}.dmg`));
+    assert.equal(releaseUpdate(release(), "0.3.1", "darwin", arch), null);
+  }
+  assert.equal(releaseUpdate(candidate, "0.3.1", "linux", "x64"), null);
+});
+
+test("Mac fallback checks the correct DMG when the API is unavailable", async () => {
+  let calls = 0;
+  const checker = createUpdateChecker({
+    platform: "darwin",
+    arch: "arm64",
+    currentVersion: "0.3.1",
+    request: async (url) => {
+      calls++;
+      if (calls === 1) return new Response(null, { status: 403 });
+      if (calls === 2)
+        return new Response(null, {
+          status: 302,
+          headers: {
+            location:
+              "https://github.com/kuaanii/FriendlyAgenda/releases/tag/v0.4.0",
+          },
+        });
+      assert.ok(url.endsWith("FriendlyAgenda-0.4.0-macOS-arm64.dmg"));
+      return new Response(null, {
+        status: 302,
+        headers: {
+          location:
+            "https://release-assets.githubusercontent.com/github-production-release-asset/123/mac",
+        },
+      });
+    },
+  });
+  assert.equal((await checker.check()).status, "available");
 });
 test("solo ofrece versiones estables más recientes y un ejecutable del repositorio correcto", () => {
   assert.equal(releaseUpdate(release(), "0.3.0").version, "0.4.0");

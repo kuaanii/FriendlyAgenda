@@ -6,6 +6,7 @@ for (const width of [1000, 1440, 1700]) {
   }) => {
     await page.setViewportSize({ width, height: 1050 });
     await page.goto("/");
+    await page.locator(".language-picker select").selectOption("es");
     const firstDay = page.locator(".day").nth(0);
     const nextDay = page.locator(".day").nth(1);
     const initialNext = await nextDay.boundingBox();
@@ -27,7 +28,10 @@ for (const width of [1000, 1440, 1700]) {
     ).toBe("none");
     await expect(page.getByRole("status").first()).toHaveText("Todo guardado");
     await editor.focus();
-    await page.keyboard.press("Control+End", { delay: 50 });
+    await page.keyboard.press(
+      process.platform === "darwin" ? "Meta+ArrowDown" : "Control+End",
+      { delay: 50 },
+    );
     await page.keyboard.press("Enter");
     await page.keyboard.type("Última línea accesible");
     await expect
