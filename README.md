@@ -6,7 +6,7 @@ Una agenda de papel, en digital. Aplicación de escritorio para Windows, de cód
 
 ## Usar la aplicación
 
-Abre `release/FriendlyAgenda-0.2.1-Windows.exe`. Cierra primero la versión anterior si sigue abierta. Es un ejecutable portable para Windows x64: no requiere instalación ni cuenta. Esta versión no tiene firma digital. Usa la misma carpeta de datos que las versiones anteriores.
+Descarga `FriendlyAgenda-0.3.0-Windows.exe` desde [las versiones publicadas](https://github.com/kuaanii/FriendlyAgenda/releases/latest). Cierra primero la versión anterior si sigue abierta. Es un ejecutable portable para Windows x64: no requiere instalación ni cuenta. Esta versión no tiene firma digital. Usa la misma carpeta de datos que las versiones anteriores.
 
 - Cada doble página muestra cuatro días consecutivos, dos en cada hoja. Las flechas avanzan o retroceden cuatro días; el calendario permite saltar a otra fecha.
 - Pulsa el espacio de notas para escribir. Selecciona texto y usa los botones de negrita, cursiva, subrayado, color o listas. También funcionan los atajos habituales de edición.
@@ -19,7 +19,15 @@ Abre `release/FriendlyAgenda-0.2.1-Windows.exe`. Cierra primero la versión ante
 
 ## Datos y copias
 
-La aplicación de Windows guarda automáticamente en `%APPDATA%/FriendlyAgenda/data/agenda.json`. **Mi espacio → Abrir carpeta de datos** muestra la ubicación exacta. No se usa servidor, cuenta, telemetría ni fuentes remotas.
+La aplicación de Windows guarda automáticamente en `%APPDATA%/FriendlyAgenda/data/agenda.json`. **Mi espacio → Abrir carpeta de datos** muestra la ubicación exacta. No requiere cuenta ni usa telemetría, fuentes remotas o un servidor para guardar tu agenda.
+
+## Actualizaciones
+
+Desde la versión 0.3.0 se comprueban las versiones estables publicadas en GitHub al abrir la aplicación, cada seis horas y al recuperar la conexión. Si hay una versión superior con un ejecutable para Windows, aparece un aviso con **Ahora no** y **Descargar nueva versión**. Si se pospone, vuelve a avisar en la siguiente apertura o comprobación periódica. También puedes comprobarlo en **Mi espacio → Buscar actualizaciones**.
+
+La consulta se limita a la API pública de `kuaanii/FriendlyAgenda`. No envía notas, asignaturas, credenciales ni identificadores de usuario; GitHub recibe los datos normales de una conexión web, como la dirección IP. Sin Internet la agenda sigue funcionando. No descarga ni instala nada automáticamente: la descarga oficial se abre en el navegador cuando la eliges. Los cambios de código o las etiquetas sin una GitHub Release con ejecutable no generan un aviso de actualización.
+
+Las versiones anteriores a 0.3.0 deben actualizarse manualmente una vez para incorporar esta función.
 
 Cada guardado conserva la versión anterior en `agenda.json.bak` y sustituye el archivo principal mediante un archivo temporal. Si el principal está dañado, se intenta recuperar la copia y se conserva el dañado en `agenda.json.corrupt`. Si ambos son ilegibles, la aplicación muestra el error sin sustituirlos.
 
@@ -62,8 +70,8 @@ Para verificar el programa empaquetado, define `FRIENDLY_AGENDA_EXE` con la ruta
 
 Se comprueban navegación entre años y años bisiestos, conservación del formato, guardado y recuperación desde disco, rechazo de copias inválidas, creación y finalización de deberes, búsqueda y persistencia del tema. Las capturas de ambos temas se guardan en `docs/screenshots/`.
 
-La agenda admite hasta 20 MB de datos serializados. Los casos detectados y corregidos durante la revisión están en [docs/revision.md](docs/revision.md).
+La agenda admite hasta 20 MB de datos serializados. Los casos detectados y corregidos durante la revisión están en [docs/revision.md](docs/revision.md). `pnpm audit:publication` revisa archivos actuales y blobs de todo el historial de Git para detectar nombres sensibles, credenciales, rutas personales, correos y metadatos de imágenes. Es una comprobación preventiva, no una garantía de detección de cualquier secreto.
 
 ## Licencia
 
-MIT. Puedes estudiar, modificar y redistribuir el código. No se ha publicado todavía en un repositorio remoto.
+MIT. Puedes estudiar, modificar y redistribuir el código. Repositorio: [kuaanii/FriendlyAgenda](https://github.com/kuaanii/FriendlyAgenda). Para publicar nuevas versiones, consulta [RELEASING.md](RELEASING.md).

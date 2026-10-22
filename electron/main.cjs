@@ -20,6 +20,16 @@ else {
   app.whenReady().then(async () => {
     const { createStorage } = await import("./storage.mjs");
     const { encodeBackup, decodeBackup } = await import("../src/model.js");
+    const { createUpdateChecker } = await import("./updates.mjs");
+    const updates = createUpdateChecker({ currentVersion: app.getVersion() });
+    ipcMain.handle("agenda:check-updates", () => updates.check());
+    ipcMain.handle("agenda:download-update", async () => {
+      const url = updates.downloadUrl();
+      if (!url)
+        throw new Error("Comprueba primero si hay una versión disponible.");
+      await shell.openExternal(url);
+      return true;
+    });
     const folder = path.join(app.getPath("userData"), "data");
     storage = createStorage(folder);
     ipcMain.handle("agenda:load", () => storage.load());

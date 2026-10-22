@@ -27,6 +27,22 @@ test(
       await page
         .getByRole("heading", { name: "Haz sitio a lo importante." })
         .waitFor();
+      const updateState = await page.evaluate(() =>
+        window.agenda.checkUpdates(),
+      );
+      assert.ok(
+        [
+          "available",
+          "current",
+          "no-release",
+          "no-download",
+          "unavailable",
+        ].includes(updateState.status),
+      );
+      if (updateState.status === "available")
+        await page
+          .getByRole("button", { name: "Ahora no", exact: true })
+          .click();
       await page.context().setOffline(true);
       assert.equal(await page.locator(".book .day").count(), 4);
       await page.getByRole("button", { name: "Nuevo apunte" }).click();
@@ -77,6 +93,13 @@ test(
       assert.equal(day.note.content[0].content[0].text, "Nota privada");
       app = await electron.launch(options);
       page = await app.firstWindow();
+      const reopenedUpdateState = await page.evaluate(() =>
+        window.agenda.checkUpdates(),
+      );
+      if (reopenedUpdateState.status === "available")
+        await page
+          .getByRole("button", { name: "Ahora no", exact: true })
+          .click();
       await page
         .getByRole("button", {
           name: "Marcar pendiente: Prueba local de escritorio",

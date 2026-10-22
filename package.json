@@ -1,6 +1,10 @@
 {
   "name": "friendly-agenda",
-  "version": "0.2.1",
+  "version": "0.3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kuaanii/FriendlyAgenda.git"
+  },
   "description": "Tu agenda de papel, en digital. Privada y local.",
   "author": "FriendlyAgenda contributors",
   "license": "MIT",
@@ -14,7 +18,8 @@
     "pack": "vite build && electron-builder --win portable --x64",
     "test:ui": "playwright test",
     "format:check": "prettier --check src electron tests build/*.cjs *.js *.json",
-    "test:desktop": "node --test tests/desktop/*.test.js"
+    "test:desktop": "node --test tests/desktop/*.test.js",
+    "audit:publication": "node scripts/audit-publication.cjs"
   },
   "build": {
     "appId": "org.friendlyagenda.desktop",

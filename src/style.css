@@ -1219,6 +1219,37 @@ select:focus {
   color: var(--muted);
   line-height: 1.5;
 }
+.update-settings {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.update-settings strong {
+  font-size: 12px;
+}
+.update-settings small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 7px;
+}
+.update-settings .secondary-button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.update-settings p {
+  width: 100%;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+  margin: 0;
+}
 .about-box {
   display: flex;
   align-items: center;

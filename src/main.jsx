@@ -51,6 +51,7 @@ import {
   decodeBackup,
 } from "./model.js";
 import { bridge } from "./bridge.js";
+import { useUpdates, UpdateSettings, UpdatePrompt } from "./Updates.jsx";
 import "./style.css";
 
 const FeedbackContext = createContext(null);
@@ -435,6 +436,7 @@ function EntryForm({ entry, subjects, onSave, onDelete, onClose }) {
 }
 
 function App() {
+  const updates = useUpdates();
   const [data, setData] = useState(null),
     [loadError, setLoadError] = useState(""),
     [start, setStart] = useState(today()),
@@ -1102,8 +1104,14 @@ function App() {
                 <small>Versión {version} · Código abierto · Licencia MIT</small>
               </span>
             </div>
+            <UpdateSettings updates={updates} />
           </Modal>
         )}
+        {!entry &&
+          search === null &&
+          !settings &&
+          !subjectsOpen &&
+          !pendingImport && <UpdatePrompt updates={updates} Modal={Modal} />}
         {pendingImport && (
           <Modal
             title="Restaurar tu agenda"

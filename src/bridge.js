@@ -24,6 +24,14 @@ export const bridge = window.agenda || {
   async importBackup() {
     return null;
   },
+  async checkUpdates() {
+    return { status: "desktop-only" };
+  },
+  async downloadUpdate() {
+    throw new Error(
+      "Las actualizaciones están disponibles en la aplicación de Windows.",
+    );
+  },
   async openFolder() {
     throw new Error(
       "La carpeta de datos está disponible en la aplicación de Windows.",

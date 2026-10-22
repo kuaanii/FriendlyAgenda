@@ -5,4 +5,6 @@ contextBridge.exposeInMainWorld("agenda", {
   exportBackup: (data) => ipcRenderer.invoke("agenda:export", data),
   importBackup: () => ipcRenderer.invoke("agenda:import"),
   openFolder: () => ipcRenderer.invoke("agenda:folder"),
+  checkUpdates: () => ipcRenderer.invoke("agenda:check-updates"),
+  downloadUpdate: () => ipcRenderer.invoke("agenda:download-update"),
 });
