@@ -13,7 +13,7 @@ Referencia inicial: `58d4f71`; implementación revisada: `2a9f321`. Se realizaro
 2. **P2 — Tamaño de documentos:** mismo problema detectado en Standards, resuelto con una única implementación.
 3. **P2 — Avisos de importación:** los errores podían quedar detrás del diálogo modal. Corregido: los avisos aparecen dentro del diálogo activo, con prueba de importación inválida.
 
-La revisión inicial encontró 2 problemas en Standards (máximo P1) y 3 en Spec (máximo P2), con un problema compartido. Se corrigieron los cuatro problemas distintos. No quedaron requisitos principales ausentes en la revisión.
+La revisión inicial encontró 2 problemas en Standards (máximo P1) y 3 en Spec (máximo P2), con un problema compartido. Se corrigieron los cuatro problemas distintos en `5fc00df`; ambos revisores verificaron ese commit y confirmaron que sus hallazgos quedaron resueltos. No quedaron requisitos principales ausentes en la revisión.
 
 ## Verificación
 
