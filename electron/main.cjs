@@ -10,6 +10,8 @@ const path = require("node:path");
 const fs = require("node:fs/promises");
 let window;
 let storage;
+let notifications;
+const { Worker } = require("node:worker_threads");
 let pendingSaves = new Set();
 let closing = false;
 let lastSaveError = null;
@@ -20,6 +22,10 @@ app.on("before-quit", () => {
   quitRequested = true;
 });
 app.setName("FriendlyAgenda");
+if (process.platform === "win32") {
+  app.setAppUserModelId("org.friendlyagenda.desktop");
+  app.setToastActivatorCLSID("9A96BD12-6D56-4A32-BC4A-E811124BB8F1");
+}
 if (process.env.FRIENDLY_AGENDA_DATA_DIR)
   app.setPath("userData", path.resolve(process.env.FRIENDLY_AGENDA_DATA_DIR));
 if (!app.requestSingleInstanceLock()) app.quit();
@@ -27,6 +33,7 @@ else {
   app.on("second-instance", () => {
     if (window && !window.isDestroyed()) {
       if (window.isMinimized()) window.restore();
+      window.show();
       window.focus();
     } else createWindow?.();
   });
@@ -112,9 +119,70 @@ else {
     });
     const folder = path.join(app.getPath("userData"), "data");
     storage = createStorage(folder);
+    const { createNotifications } = await import("./notifications.mjs");
+    notifications = createNotifications({
+      folder,
+      showWindow: async (date) => {
+        if (!window || window.isDestroyed()) await createWindow();
+        if (window.isMinimized()) window.restore();
+        window.show();
+        window.focus();
+        if (date) window.webContents.send("agenda:reminder-date", date);
+      },
+    });
+    ipcMain.handle("agenda:notifications-state", () => notifications.state());
+    ipcMain.handle("agenda:notifications-test", () => notifications.test());
+    ipcMain.handle("agenda:reminder-date", () => notifications.takeDate());
+    ipcMain.handle("agenda:calendar-preview", async (_, options) => {
+      if (!options || typeof options !== "object")
+        throw new Error("calendarInvalid");
+      const { canceled, filePaths } = await dialog.showOpenDialog(window, {
+        properties: ["openFile"],
+        filters: [{ name: t("Calendario"), extensions: ["ics", "csv"] }],
+      });
+      if (canceled) return null;
+      const file = filePaths[0];
+      if ((await fs.stat(file)).size > 20 * 1024 * 1024)
+        throw new Error("calendarLimit");
+      const source = await fs.readFile(file, "utf8");
+      const result = await new Promise((resolve, reject) => {
+        const worker = new Worker(path.join(__dirname, "calendar-worker.mjs"), {
+          workerData: {
+            source,
+            options: {
+              ...options,
+              format:
+                path.extname(file).toLowerCase() === ".csv" ? "csv" : "ics",
+            },
+          },
+          resourceLimits: { maxOldGenerationSizeMb: 128 },
+        });
+        const timer = setTimeout(() => {
+          worker.terminate();
+          reject(new Error("calendarLimit"));
+        }, 10000);
+        worker.once("message", (message) => {
+          clearTimeout(timer);
+          worker.terminate();
+          message.error
+            ? reject(new Error(message.error))
+            : resolve(message.result);
+        });
+        worker.once("error", () => {
+          clearTimeout(timer);
+          reject(new Error("calendarInvalid"));
+        });
+        worker.once("exit", (code) => {
+          clearTimeout(timer);
+          if (code !== 0) reject(new Error("calendarInvalid"));
+        });
+      });
+      return result;
+    });
     ipcMain.handle("agenda:load", async () => {
       const result = await storage.load();
       setLocale(result.data.locale || "en");
+      await notifications.configure(result.data);
       return result;
     });
     ipcMain.handle("agenda:save", async (_, data) => {
@@ -123,6 +191,7 @@ else {
       try {
         await operation;
         setLocale(data.locale || "en");
+        await notifications.configure(data);
         lastSaveError = null;
         return true;
       } catch (error) {
@@ -178,6 +247,11 @@ else {
       window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
       window.webContents.on("will-navigate", (event) => event.preventDefault());
       window.on("close", (event) => {
+        if (notifications.background() && !quitRequested) {
+          event.preventDefault();
+          window.hide();
+          return;
+        }
         if (closing || (pendingSaves.size === 0 && !lastSaveError)) return;
         event.preventDefault();
         const shouldQuit = quitRequested;
@@ -221,6 +295,10 @@ else {
     });
   });
   app.on("window-all-closed", () => {
-    if (process.platform !== "darwin") app.quit();
+    if (
+      !notifications?.background() &&
+      (process.platform !== "darwin" || notifications?.enabled())
+    )
+      app.quit();
   });
 }

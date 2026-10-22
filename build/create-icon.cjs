@@ -22,4 +22,11 @@ const sharp = require(process.env.SHARP_PATH || "sharp");
     path.join(__dirname, "icon.ico"),
     Buffer.concat([header, png]),
   );
+  for (const scale of [1, 2]) {
+    const suffix = scale === 1 ? "" : "@2x";
+    await sharp(path.join(__dirname, "tray.svg"))
+      .resize(18 * scale, 18 * scale)
+      .png()
+      .toFile(path.join(__dirname, `trayTemplate${suffix}.png`));
+  }
 })();

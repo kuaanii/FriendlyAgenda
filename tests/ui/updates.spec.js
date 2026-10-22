@@ -55,7 +55,7 @@ test("la comprobación manual detecta una nueva versión sin cerrar la agenda", 
   await page
     .getByRole("button", { name: "Buscar actualizaciones", exact: true })
     .click();
-  await expect(page.getByRole("dialog").getByRole("status")).toHaveText(
+  await expect(page.locator(".update-settings").getByRole("status")).toHaveText(
     "La versión 99.0.0 está disponible.",
   );
   await page
@@ -74,9 +74,9 @@ test("sin conexión se puede seguir escribiendo y se explica el estado de las ac
     .first()
     .fill("La agenda sigue funcionando.");
   await page.getByRole("button", { name: "Mi espacio", exact: true }).click();
-  await expect(page.getByRole("dialog").getByRole("status")).toContainText(
-    "sin conexión",
-  );
+  await expect(
+    page.locator(".update-settings").getByRole("status"),
+  ).toContainText("sin conexión");
 });
 test("el recordatorio vuelve en la siguiente comprobación periódica aunque la primera respuesta tarde", async ({
   page,

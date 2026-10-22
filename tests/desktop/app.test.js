@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { _electron as electron } from "@playwright/test";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
 
@@ -167,6 +167,137 @@ test(
       assert.ok(
         resolve(userData).startsWith(
           resolve(tmpdir()) + sep + "friendly-agenda-desktop-",
+        ),
+      );
+      await rm(userData, { recursive: true, force: true });
+    }
+  },
+);
+
+test(
+  "calendar worker, reminder journal and tray lifecycle work through real desktop IPC",
+  { timeout: 60000 },
+  async () => {
+    const userData = await mkdtemp(
+      join(tmpdir(), "friendly-agenda-desktop-mega-"),
+    );
+    const environment = { ...process.env, FRIENDLY_AGENDA_DATA_DIR: userData };
+    delete environment.ELECTRON_RUN_AS_NODE;
+    let application;
+    try {
+      const file = join(userData, "fixture.ics");
+      await writeFile(
+        file,
+        "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:fixture-worker\r\nDTSTART;VALUE=DATE:20261022\r\nDTEND;VALUE=DATE:20261023\r\nSUMMARY:Birthday fixture\r\nEND:VEVENT\r\nEND:VCALENDAR",
+      );
+      application = await electron.launch({
+        env: environment,
+        ...(process.env.FRIENDLY_AGENDA_EXE
+          ? { executablePath: process.env.FRIENDLY_AGENDA_EXE, args: [] }
+          : { args: ["."] }),
+      });
+      const page = await application.firstWindow();
+      await page.locator(".book").waitFor();
+      await application.evaluate(({ dialog, Notification, app }, file) => {
+        dialog.showOpenDialog = async () => ({
+          canceled: false,
+          filePaths: [file],
+        });
+        // Keep test OS integration inside its temporary profile. Delivery is deterministic,
+        // so CI never needs a user's system notification permission or displays real alerts.
+        app.setPath("appData", app.getPath("userData"));
+        globalThis.fixtureNotifications = 0;
+        Notification.prototype.show = function () {
+          globalThis.fixtureNotifications++;
+          this.emit("show");
+        };
+      }, file);
+      const preview = await page.evaluate(() =>
+        window.agenda.calendarPreview({
+          from: "2026-01-01",
+          to: "2027-12-31",
+          dateFormat: "dmy",
+        }),
+      );
+      assert.equal(preview.events.length, 1);
+      assert.equal(preview.events[0].date, "2026-10-22");
+      assert.equal(preview.events[0].entry.type, "birthday");
+      const data = await page.evaluate(async () => {
+        const { data } = await window.agenda.load();
+        const d = new Date();
+        const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        data.notifications = {
+          enabled: true,
+          background: true,
+          allDayTime: "00:00",
+        };
+        data.days[date] = {
+          note: { type: "doc", content: [{ type: "paragraph" }] },
+          entries: [
+            {
+              id: "fixture-reminder",
+              title: "Pending fixture",
+              type: "homework",
+              done: false,
+              subject: "",
+              allDay: true,
+              reminder: 0,
+            },
+          ],
+        };
+        await window.agenda.save(data);
+        return data;
+      });
+      await page.waitForFunction(async () => {
+        const result = await window.agenda.notificationsState();
+        return result.supported && !result.issue;
+      });
+      for (let attempt = 0; attempt < 50; attempt++) {
+        try {
+          const journal = JSON.parse(
+            await readFile(join(userData, "data", "reminders.json"), "utf8"),
+          );
+          if (Object.keys(journal).length) break;
+        } catch {}
+        if (attempt === 49) assert.fail("Reminder journal was not written");
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      assert.equal(
+        await application.evaluate(() => globalThis.fixtureNotifications),
+        1,
+      );
+      await page.evaluate((data) => window.agenda.save(data), data);
+      assert.equal(
+        await application.evaluate(() => globalThis.fixtureNotifications),
+        1,
+      );
+      await application.evaluate(({ BrowserWindow }) =>
+        BrowserWindow.getAllWindows()[0].close(),
+      );
+      assert.equal(
+        await application.evaluate(({ BrowserWindow }) =>
+          BrowserWindow.getAllWindows()[0].isVisible(),
+        ),
+        false,
+      );
+      await application.evaluate(({ app }) => app.emit("second-instance"));
+      assert.equal(
+        await application.evaluate(({ BrowserWindow }) =>
+          BrowserWindow.getAllWindows()[0].isVisible(),
+        ),
+        true,
+      );
+      const state = await page.evaluate(() => window.agenda.testNotification());
+      assert.equal(state.issue, "");
+      assert.equal(
+        await application.evaluate(() => globalThis.fixtureNotifications),
+        2,
+      );
+    } finally {
+      if (application) await application.close();
+      assert.ok(
+        resolve(userData).startsWith(
+          resolve(tmpdir()) + sep + "friendly-agenda-desktop-mega-",
         ),
       );
       await rm(userData, { recursive: true, force: true });

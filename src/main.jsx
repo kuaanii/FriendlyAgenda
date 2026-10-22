@@ -41,6 +41,12 @@ import {
   Minimize2,
   PanelLeftClose,
   PanelLeftOpen,
+  Bell,
+  Cake,
+  Users,
+  Clock,
+  Flag,
+  Tag,
 } from "lucide-react";
 import { version } from "../package.json";
 import {
@@ -54,8 +60,48 @@ import { bridge } from "./bridge.js";
 import { useUpdates, UpdateSettings, UpdatePrompt } from "./Updates.jsx";
 import "./style.css";
 import { I18nProvider, useI18n, LanguagePicker } from "./I18n.jsx";
+import {
+  entryTypes,
+  reminderMinutes,
+  compareEntries,
+  mergeCalendar,
+  validDate,
+} from "./entries.js";
+import { CalendarImport } from "./CalendarImport.jsx";
+import {
+  ThemePicker,
+  NotificationSettings,
+  useSystemTheme,
+} from "./Preferences.jsx";
 import { translate, errorMessage } from "./i18n.js";
 
+const typeIcons = {
+  homework: BookOpen,
+  exam: GraduationCap,
+  deadline: Flag,
+  birthday: Cake,
+  meeting: Users,
+  appointment: Clock,
+  class: GraduationCap,
+  study: BookOpen,
+  holiday: Sun,
+  event: CalendarDays,
+  other: Tag,
+};
+function EntryMeta({ entry }) {
+  const { t } = useI18n();
+  const Icon = typeIcons[entry.type] || Tag;
+  return (
+    <>
+      <Icon size={12} />
+      {t(entryTypes[entry.type])} ·{" "}
+      {entry.allDay === false
+        ? entry.time + (entry.endTime ? ` – ${entry.endTime}` : "")
+        : t("Todo el día")}
+      {entry.reminder !== null && <Bell size={11} />}
+    </>
+  );
+}
 const FeedbackContext = createContext(null);
 
 const blankDay = () => ({
@@ -202,7 +248,9 @@ function Day({ date, day, subjects, onChange, onEdit, onActive, filter }) {
     });
     editor.view.dispatch(editor.state.tr);
   }, [editor, locale, date]);
-  const visible = day.entries.filter((e) => !filter || e.subject === filter);
+  const visible = day.entries
+    .filter((e) => !filter || e.subject === filter)
+    .sort(compareEntries);
   return (
     <section className={`day ${date === today() ? "is-today" : ""}`}>
       <header className="day-heading">
@@ -260,7 +308,7 @@ function Day({ date, day, subjects, onChange, onEdit, onActive, filter }) {
               >
                 <span>{entry.title}</span>
                 <small>
-                  {entry.type === "exam" ? t("Examen") : t("Deber")}
+                  <EntryMeta entry={entry} />
                   {s ? ` · ${s.name}` : ""}
                 </small>
               </button>
@@ -376,6 +424,12 @@ function EntryForm({ entry, subjects, onSave, onDelete, onClose }) {
     title: "",
     subject: "",
     done: false,
+    allDay: true,
+    time: "09:00",
+    endTime: "",
+    reminder: 0,
+    description: "",
+    location: "",
     ...entry,
   });
   return (
@@ -386,7 +440,12 @@ function EntryForm({ entry, subjects, onSave, onDelete, onClose }) {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onSave({ ...value, title: value.title.trim() });
+          onSave({
+            ...value,
+            title: value.title.trim(),
+            time: value.allDay ? "" : value.time,
+            endTime: value.allDay ? "" : value.endTime,
+          });
         }}
       >
         <label>
@@ -418,11 +477,75 @@ function EntryForm({ entry, subjects, onSave, onDelete, onClose }) {
               value={value.type}
               onChange={(e) => setValue({ ...value, type: e.target.value })}
             >
-              <option value="homework">{t("Deber")}</option>
-              <option value="exam">{t("Examen")}</option>
+              {Object.entries(entryTypes).map(([type, label]) => (
+                <option key={type} value={type}>
+                  {t(label)}
+                </option>
+              ))}
             </select>
           </label>
         </div>
+        <label className="check-setting">
+          <input
+            type="checkbox"
+            checked={value.allDay}
+            onChange={(e) => setValue({ ...value, allDay: e.target.checked })}
+          />
+          {t("Todo el día")}
+        </label>
+        {!value.allDay && (
+          <div className="form-row">
+            <label>
+              {t("Hora de entrega o inicio")}
+              <input
+                type="time"
+                required
+                value={value.time}
+                onChange={(e) => setValue({ ...value, time: e.target.value })}
+              />
+            </label>
+            <label>
+              {t("Hora de fin (opcional)")}
+              <input
+                type="time"
+                min={value.time}
+                value={value.endTime}
+                onChange={(e) =>
+                  setValue({ ...value, endTime: e.target.value })
+                }
+              />
+            </label>
+          </div>
+        )}
+        <label>
+          {t("Recordatorio")}
+          <select
+            aria-label={t("Recordatorio")}
+            value={value.reminder ?? "off"}
+            onChange={(e) =>
+              setValue({
+                ...value,
+                reminder:
+                  e.target.value === "off" ? null : Number(e.target.value),
+              })
+            }
+          >
+            <option value="off">{t("Sin recordatorio")}</option>
+            {reminderMinutes.map((minutes) => (
+              <option key={minutes} value={minutes}>
+                {t(
+                  minutes === 0
+                    ? "A la hora indicada"
+                    : minutes === 1440
+                      ? "Un día antes"
+                      : "minutesBefore",
+                  { minutes },
+                )}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="setting-help">{t("entryReminderHelp")}</p>
         <label>
           {t("Asignatura")}
           <select
@@ -436,6 +559,27 @@ function EntryForm({ entry, subjects, onSave, onDelete, onClose }) {
               </option>
             ))}
           </select>
+        </label>
+        <div className="form-row">
+          <label>
+            {t("Lugar (opcional)")}
+            <input
+              maxLength={1000}
+              value={value.location}
+              onChange={(e) => setValue({ ...value, location: e.target.value })}
+            />
+          </label>
+        </div>
+        <label>
+          {t("Detalles (opcional)")}
+          <textarea
+            rows={3}
+            maxLength={10000}
+            value={value.description}
+            onChange={(e) =>
+              setValue({ ...value, description: e.target.value })
+            }
+          />
         </label>
         <footer className="modal-actions">
           {entry.id && (
@@ -475,9 +619,11 @@ function App() {
     [settings, setSettings] = useState(false),
     [subjectsOpen, setSubjectsOpen] = useState(false),
     [pendingImport, setPendingImport] = useState(null),
+    [calendarOpen, setCalendarOpen] = useState(false),
     [deletedEntry, setDeletedEntry] = useState(null),
     [immersive, setImmersive] = useState(false),
     [sidebarHidden, setSidebarHidden] = useState(false);
+  const resolvedTheme = useSystemTheme(data?.theme);
   const [newSubject, setNewSubject] = useState(""),
     [subjectColor, setSubjectColor] = useState("#9c82c8");
   const revision = useRef(0),
@@ -497,7 +643,6 @@ function App() {
   }, []);
   useEffect(() => {
     if (!data || !ready.current) return;
-    document.documentElement.dataset.theme = data.theme;
     const r = ++revision.current;
     setStatus("Guardando…");
     bridge
@@ -529,6 +674,23 @@ function App() {
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
+  }, []);
+  useEffect(() => {
+    const navigateReminder = (date) => {
+      if (validDate(date)) {
+        setStart(date);
+        setSettings(false);
+        setEntry(null);
+      }
+    };
+    const unsubscribe = bridge.onReminderDate(navigateReminder);
+    bridge
+      .takeReminderDate()
+      .then((date) => {
+        if (date) navigateReminder(date);
+      })
+      .catch(() => {});
+    return unsubscribe;
   }, []);
   if (loadError)
     return (
@@ -568,7 +730,7 @@ function App() {
         .filter((e) => !e.done && date >= today())
         .map((e) => ({ ...e, date })),
     )
-    .sort((a, b) => a.date.localeCompare(b.date))
+    .sort(compareEntries)
     .slice(0, 3);
   const total = dates.flatMap((d) => data.days[d]?.entries || []),
     done = total.filter((e) => e.done).length;
@@ -725,12 +887,16 @@ function App() {
               onClick={() =>
                 setData({
                   ...data,
-                  theme: data.theme === "light" ? "dark" : "light",
+                  theme: resolvedTheme === "light" ? "dark" : "light",
                 })
               }
             >
-              {data.theme === "light" ? <Moon size={17} /> : <Sun size={17} />}{" "}
-              {t(data.theme === "light" ? "Tema oscuro" : "Tema claro")}
+              {resolvedTheme === "light" ? (
+                <Moon size={17} />
+              ) : (
+                <Sun size={17} />
+              )}{" "}
+              {t(resolvedTheme === "light" ? "Tema oscuro" : "Tema claro")}
             </button>
             <IconButton
               label={t("Ajustes y copias de seguridad")}
@@ -943,8 +1109,7 @@ function App() {
                       <span className="upcoming-date">{shortDate(e.date)}</span>
                       <strong>{e.title}</strong>
                       <span>
-                        {e.type === "exam" ? t("Examen") : t("Deber")}{" "}
-                        <ArrowRight size={15} />
+                        <EntryMeta entry={e} /> <ArrowRight size={15} />
                       </span>
                     </button>
                   ))}
@@ -1124,7 +1289,32 @@ function App() {
                 "Tu agenda vive en este ordenador. Exporta una copia para guardarla donde prefieras.",
               )}
             </p>
+            <ThemePicker
+              value={data.theme}
+              onChange={(theme) =>
+                setData((previous) => ({ ...previous, theme }))
+              }
+            />
+            <NotificationSettings
+              value={data.notifications}
+              onChange={(notifications) =>
+                setData((previous) => ({ ...previous, notifications }))
+              }
+            />
             <div className="settings-actions">
+              <button
+                onClick={() => {
+                  setSettings(false);
+                  setCalendarOpen(true);
+                }}
+              >
+                <CalendarDays size={21} />
+                <span>
+                  <strong>{t("Importar calendario")}</strong>
+                  <small>{t("calendarProvidersShort")}</small>
+                </span>
+                <ArrowUpRight size={16} />
+              </button>
               <button onClick={exportData}>
                 <Download size={21} />
                 <span>
@@ -1176,7 +1366,31 @@ function App() {
             <UpdateSettings updates={updates} />
           </Modal>
         )}
+        {calendarOpen && (
+          <CalendarImport
+            Modal={Modal}
+            onClose={() => setCalendarOpen(false)}
+            onImport={(events) => {
+              const merged = mergeCalendar(data, events);
+              try {
+                decodeBackup(JSON.stringify(merged.data));
+                setData(merged.data);
+                setCalendarOpen(false);
+                setNotice(
+                  translate(locale, "calendarImported", {
+                    added: merged.added,
+                    duplicates: merged.duplicates,
+                  }),
+                );
+                if (events[0]) navigate(events[0].date);
+              } catch (e) {
+                setError(e.message);
+              }
+            }}
+          />
+        )}
         {!entry &&
+          !calendarOpen &&
           search === null &&
           !settings &&
           !subjectsOpen &&
@@ -1236,7 +1450,8 @@ function App() {
           search === null &&
           !settings &&
           !subjectsOpen &&
-          !pendingImport && (
+          !pendingImport &&
+          !calendarOpen && (
             <div className="error-toast" role="alert">
               <span>{errorMessage(locale, error)}</span>
               <button

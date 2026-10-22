@@ -1,6 +1,21 @@
 import { decodeBackup, emptyAgenda, encodeBackup } from "./model.js";
 const key = "friendly-agenda-v1";
-export const bridge = window.agenda || {
+const browserBridge = {
+  async calendarPreview() {
+    throw new Error("desktopOnly");
+  },
+  async notificationsState() {
+    return { supported: false, issue: "desktopOnly" };
+  },
+  async testNotification() {
+    return { supported: false, issue: "desktopOnly" };
+  },
+  async takeReminderDate() {
+    return null;
+  },
+  onReminderDate() {
+    return () => {};
+  },
   async load() {
     const raw = localStorage.getItem(key);
     return { data: raw ? decodeBackup(raw) : emptyAgenda() };
@@ -38,3 +53,5 @@ export const bridge = window.agenda || {
     );
   },
 };
+
+export const bridge = { ...browserBridge, ...window.agenda };

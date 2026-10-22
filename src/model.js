@@ -1,3 +1,9 @@
+import {
+  entryTypes,
+  reminderMinutes,
+  validTime,
+  validDate,
+} from "./entries.js";
 export function addDays(date, amount) {
   const value = new Date(`${date}T12:00:00Z`);
   value.setUTCDate(value.getUTCDate() + amount);
@@ -19,7 +25,8 @@ export function emptyAgenda() {
       { id: "language", name: "Language", color: "#d99a63" },
       { id: "science", name: "Science", color: "#78a88b" },
     ],
-    theme: "light",
+    theme: "system",
+    notifications: { enabled: false, background: true, allDayTime: "09:00" },
   };
 }
 const blockTypes = [
@@ -150,7 +157,12 @@ export function validateAgenda(data) {
     typeof data.days !== "object" ||
     Array.isArray(data.days) ||
     !Array.isArray(data.subjects) ||
-    !["light", "dark"].includes(data.theme) ||
+    !["light", "dark", "system"].includes(data.theme) ||
+    (data.notifications !== undefined &&
+      (!data.notifications ||
+        typeof data.notifications.enabled !== "boolean" ||
+        typeof data.notifications.background !== "boolean" ||
+        !validTime(data.notifications.allDayTime))) ||
     (data.locale !== undefined && !["en", "es", "fr"].includes(data.locale))
   )
     throw new Error("El archivo no es una copia válida de FriendlyAgenda.");
@@ -170,9 +182,7 @@ export function validateAgenda(data) {
   }
   for (const [date, day] of Object.entries(data.days)) {
     if (
-      !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
-      !Number.isFinite(Date.parse(date)) ||
-      new Date(date).toISOString().slice(0, 10) !== date ||
+      !validDate(date) ||
       !day ||
       !Array.isArray(day.entries) ||
       !day.note ||
@@ -188,7 +198,23 @@ export function validateAgenda(data) {
         entryIds.has(e.id) ||
         typeof e.title !== "string" ||
         !e.title.trim() ||
-        !["homework", "exam"].includes(e.type) ||
+        !Object.hasOwn(entryTypes, e.type) ||
+        (e.allDay !== undefined && typeof e.allDay !== "boolean") ||
+        (e.allDay === false && !validTime(e.time)) ||
+        (e.time !== undefined && e.time !== "" && !validTime(e.time)) ||
+        (e.endTime !== undefined &&
+          e.endTime !== "" &&
+          (!validTime(e.endTime) ||
+            e.allDay !== false ||
+            e.endTime < e.time)) ||
+        (e.reminder !== undefined &&
+          e.reminder !== null &&
+          !reminderMinutes.includes(e.reminder)) ||
+        ["description", "location", "importKey"].some(
+          (key) =>
+            e[key] !== undefined &&
+            (typeof e[key] !== "string" || e[key].length > 10000),
+        ) ||
         typeof e.done !== "boolean" ||
         (e.subject !== "" && !ids.has(e.subject))
       )
