@@ -1,6 +1,6 @@
 # Configuración inicial propuesta
 
-Este borrador recoge la propuesta pendiente de confirmar; todavía no configura instrucciones para agentes.
+Propuesta aprobada por el usuario e implementada en AGENTS.md y docs/agents/.
 
 ## Archivo de instrucciones
 

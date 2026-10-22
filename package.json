@@ -1,0 +1,59 @@
+{
+  "name": "friendly-agenda",
+  "version": "0.1.0",
+  "description": "Tu agenda de papel, en digital. Privada y local.",
+  "author": "FriendlyAgenda contributors",
+  "license": "MIT",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "test": "node --test tests/*.test.js",
+    "start": "electron .",
+    "pack": "vite build && electron-builder --win portable --x64",
+    "test:ui": "playwright test",
+    "format:check": "prettier --check src electron tests build/*.cjs *.js *.json",
+    "test:desktop": "node --test tests/desktop/*.test.js"
+  },
+  "build": {
+    "appId": "org.friendlyagenda.desktop",
+    "productName": "FriendlyAgenda",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "src/model.js",
+      "package.json",
+      "build/icon.png"
+    ],
+    "win": {
+      "target": "portable",
+      "signAndEditExecutable": true,
+      "icon": "build/icon.ico",
+      "signExecutable": false
+    },
+    "portable": {
+      "artifactName": "FriendlyAgenda-${version}-Windows.exe"
+    },
+    "electronDist": "node_modules/electron/dist"
+  },
+  "devDependencies": {
+    "@tiptap/extension-placeholder": "^3.32.0",
+    "@tiptap/extension-text-style": "^3.32.0",
+    "@tiptap/pm": "^3.32.0",
+    "@tiptap/react": "^3.32.0",
+    "@tiptap/starter-kit": "^3.32.0",
+    "lucide-react": "^1.61.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "@playwright/test": "^1.64.1",
+    "@vitejs/plugin-react": "^6.1.2",
+    "electron": "^45.0.0",
+    "electron-builder": "^26.15.3",
+    "prettier": "^3.9.10",
+    "vite": "^8.3.5"
+  }
+}

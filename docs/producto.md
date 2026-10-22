@@ -19,11 +19,11 @@ Adaptar la jerarquía tipográfica expresiva, los contornos finos, las esquinas 
 
 La doble página es el centro de la ventana. Separación central sutil, márgenes amplios, fecha legible y dos espacios de día en cada hoja. Barra lateral compacta para calendario, búsqueda y asignaturas. Herramientas de formato mediante botones convencionales y accesibles.
 
-## Decisiones pendientes
+## Decisiones confirmadas en la segunda ronda
 
-- Navegación: propuesta de avanzar y retroceder cuatro días consecutivos, incluyendo fines de semana, sin reiniciar al cambiar de semana.
-- Confirmar el alcance del formato inicial: negrita, cursiva, subrayado, colores y listas.
-- Configuración inicial de las guías de desarrollo y superficies de prueba.
+- Navegación: avanzar y retroceder cuatro días consecutivos, incluyendo fines de semana, sin reiniciar al cambiar de semana.
+- Formato inicial: negrita, cursiva, subrayado, colores y listas.
+- Configuración inicial aprobada con AGENTS.md y tareas locales. Pruebas en navegación, persistencia/restauración e interfaz de edición.
 
 ## Validación propuesta
 
