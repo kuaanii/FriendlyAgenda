@@ -28,10 +28,21 @@ for (const width of [1000, 1440, 1700]) {
     ).toBe("none");
     await expect(page.getByRole("status").first()).toHaveText("Todo guardado");
     await editor.focus();
-    await page.keyboard.press(
-      process.platform === "darwin" ? "Meta+ArrowDown" : "Control+End",
-      { delay: 50 },
-    );
+    // Put the caret at the end using the standard editing API. Native End shortcuts
+    // differ across the macOS and Windows browser runners.
+    await editor.evaluate(async (element) => {
+      const changed = new Promise((resolve) =>
+        document.addEventListener(
+          "selectionchange",
+          () => requestAnimationFrame(resolve),
+          { once: true },
+        ),
+      );
+      const selection = window.getSelection();
+      selection.selectAllChildren(element);
+      selection.collapseToEnd();
+      await changed;
+    });
     await page.keyboard.press("Enter");
     await page.keyboard.type("Última línea accesible");
     await expect

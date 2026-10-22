@@ -1563,7 +1563,8 @@ input[type="color"] {
   color: var(--text);
   border: 1px solid var(--line);
   border-radius: 9px;
-  padding: 6px 8px;
+  padding: 0 8px;
+  min-height: 32px;
   flex-shrink: 0;
 }
 .language-picker select {
@@ -1574,6 +1575,8 @@ input[type="color"] {
   font-size: 12px;
   cursor: pointer;
   max-width: 95px;
+  padding: 6px 0;
+  width: auto;
 }
 .language-picker select option {
   color: #28252e;
