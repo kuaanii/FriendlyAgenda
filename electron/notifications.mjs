@@ -1,4 +1,4 @@
-import { Notification, Tray, Menu, nativeImage, app, shell } from "electron";
+import { Notification, Tray, Menu, nativeImage, app } from "electron";
 import { readFile, writeFile, mkdir, rename, copyFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -6,52 +6,22 @@ import { createReminderEngine } from "./reminders.mjs";
 import { translate } from "../src/i18n.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-export function createNotifications({ folder, showWindow }) {
+export function createNotifications({ folder, showWindow, branding }) {
   let tray = null,
     data = null,
     issue = "",
-    registered = false,
     pendingDate = null,
     configurationRevision = 0;
   const live = new Set();
   const journal = path.join(folder, "reminders.json");
   const t = (key, values) => translate(data?.locale || "en", key, values);
-  async function registerWindows() {
-    if (process.platform !== "win32" || registered) return;
-    const location = path.join(
-      app.getPath("appData"),
-      "Microsoft",
-      "Windows",
-      "Start Menu",
-      "Programs",
-    );
-    await mkdir(location, { recursive: true });
-    const target = process.env.PORTABLE_EXECUTABLE_FILE || process.execPath;
-    if (
-      !shell.writeShortcutLink(
-        path.join(location, "FriendlyAgenda.lnk"),
-        "create",
-        {
-          target,
-          args: app.isPackaged ? "" : `"${app.getAppPath()}"`,
-          description: "FriendlyAgenda",
-          appUserModelId: "org.friendlyagenda.desktop",
-          toastActivatorClsid: app.toastActivatorCLSID,
-          icon: target,
-          iconIndex: 0,
-        },
-      )
-    )
-      throw Error("notificationSetupError");
-    registered = true;
-  }
   async function show(item, locale) {
     if (!Notification.isSupported()) {
       issue = "notificationsUnsupported";
       return false;
     }
     try {
-      await registerWindows();
+      await branding.registerWindows();
     } catch {
       issue = "notificationSetupError";
       return false;
@@ -65,6 +35,7 @@ export function createNotifications({ folder, showWindow }) {
         resolve(ok);
       };
       const notification = new Notification({
+        icon: branding.notificationIcon,
         title: item ? item.entry.title : "FriendlyAgenda",
         body: item
           ? translate(
@@ -146,7 +117,7 @@ export function createNotifications({ folder, showWindow }) {
       engine.update(next);
       try {
         if (next.notifications?.enabled) {
-          await registerWindows();
+          await branding.registerWindows();
           if (revision !== configurationRevision) return;
           if (next.notifications.background) {
             if (!tray) {

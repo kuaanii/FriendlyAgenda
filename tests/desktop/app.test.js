@@ -4,6 +4,7 @@ import { _electron as electron } from "@playwright/test";
 import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
+import { execFileSync } from "node:child_process";
 
 test(
   "la aplicación de escritorio guarda en disco y vuelve a abrir sin red",
@@ -22,6 +23,38 @@ test(
     try {
       app = await electron.launch(options);
       let page = await app.firstWindow();
+      if (process.platform === "win32") {
+        const handle = await app.evaluate(({ BrowserWindow }) =>
+          BrowserWindow.getAllWindows()[0]
+            .getNativeWindowHandle()
+            .readBigUInt64LE()
+            .toString(),
+        );
+        const identity = JSON.parse(
+          execFileSync(
+            "powershell.exe",
+            [
+              "-NoProfile",
+              "-NonInteractive",
+              "-Command",
+              `& {${await readFile(new URL("windows-branding.ps1", import.meta.url), "utf8")}} -Handle ${handle}`,
+            ],
+            { encoding: "utf8", windowsHide: true },
+          ),
+        );
+        assert.equal(identity.appId, "org.friendlyagenda.desktop");
+        assert.equal(identity.name, "FriendlyAgenda");
+        assert.ok(
+          identity.icon.includes(
+            join(userData, "branding", "FriendlyAgenda.ico"),
+          ),
+        );
+        assert.ok(
+          identity.command.includes(
+            process.env.FRIENDLY_AGENDA_EXE || "electron",
+          ),
+        );
+      }
       const errors = [];
       page.on("pageerror", (e) => errors.push(e.message));
       await page

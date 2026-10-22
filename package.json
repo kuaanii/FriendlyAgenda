@@ -1,6 +1,6 @@
 {
   "name": "friendly-agenda",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/kuaanii/FriendlyAgenda.git"
@@ -36,6 +36,7 @@
       "src/model.js",
       "package.json",
       "build/icon.png",
+      "build/icon.ico",
       "src/i18n.js",
       "src/locales/*.json",
       "src/entries.js",

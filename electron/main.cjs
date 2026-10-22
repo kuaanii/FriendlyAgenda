@@ -8,6 +8,7 @@ const {
 } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs/promises");
+const { APP_ID, createBranding } = require("./branding.cjs");
 let window;
 let storage;
 let notifications;
@@ -23,7 +24,7 @@ app.on("before-quit", () => {
 });
 app.setName("FriendlyAgenda");
 if (process.platform === "win32") {
-  app.setAppUserModelId("org.friendlyagenda.desktop");
+  app.setAppUserModelId(APP_ID);
   app.setToastActivatorCLSID("9A96BD12-6D56-4A32-BC4A-E811124BB8F1");
 }
 if (process.env.FRIENDLY_AGENDA_DATA_DIR)
@@ -104,6 +105,10 @@ else {
       );
     }
     setLocale("en");
+    const branding = createBranding({ app, shell });
+    // Cosmetic OS registration must not prevent opening local notes; notification
+    // setup retries and reports a failure in its existing settings status.
+    await branding.prepare().catch(() => {});
     const updates = createUpdateChecker({
       currentVersion: app.getVersion(),
       platform: process.platform,
@@ -122,6 +127,7 @@ else {
     const { createNotifications } = await import("./notifications.mjs");
     notifications = createNotifications({
       folder,
+      branding,
       showWindow: async (date) => {
         if (!window || window.isDestroyed()) await createWindow();
         if (window.isMinimized()) window.restore();
@@ -233,7 +239,7 @@ else {
         height: 960,
         minWidth: 1000,
         minHeight: 720,
-        icon: path.join(__dirname, "../build/icon.png"),
+        icon: branding.windowIcon,
         backgroundColor: "#f4f2ed",
         title: "FriendlyAgenda",
         autoHideMenuBar: true,
@@ -244,6 +250,7 @@ else {
           sandbox: true,
         },
       });
+      branding.applyWindow(window);
       window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
       window.webContents.on("will-navigate", (event) => event.preventDefault());
       window.on("close", (event) => {
