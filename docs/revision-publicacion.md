@@ -2,7 +2,7 @@
 
 ## Privacidad
 
-Se revisaron los archivos destinados a Git y los blobs de todo el historial local: nombres de archivos sensibles, patrones de credenciales, claves privadas, rutas de perfiles personales, direcciones de correo y metadatos PNG. No se detectaron secretos ni información personal privada en el material revisado.
+Se revisaron los archivos destinados a Git, los blobs y todas las rutas de todo el historial local, además de los recursos de la compilación de producción: nombres de archivos sensibles, patrones de credenciales, claves privadas, rutas de perfiles personales, direcciones de correo y metadatos PNG. No se detectaron secretos ni información personal privada en el material revisado.
 
 Los commits existentes usan una identidad genérica de los colaboradores. Se identificó y descartó como falso positivo el contacto público del mantenedor de una dependencia en pnpm-lock.yaml. Las capturas de la documentación corresponden a contenido de prueba generado para verificar la interfaz.
 
@@ -21,3 +21,7 @@ El proceso principal consulta exclusivamente la API pública de Releases del rep
 Se comprueba al arrancar, cada seis horas y al recuperar la conexión. Sin conexión la agenda permanece utilizable. Solo se ofrecen versiones estables mayores que la instalada y ejecutables de Windows con nombre y URL exactos del repositorio. La elección del usuario abre la descarga en el navegador; la aplicación no instala actualizaciones automáticamente.
 
 Pruebas añadidas: comparación numérica de versiones, rechazo de borradores y descargas externas, límites de peticiones, ausencia de releases, funcionamiento sin red, aviso inicial, decisión explícita de descargar y comprobación manual.
+
+## Revisión independiente
+
+La revisión de estándares encontró dos problemas: el recordatorio periódico podía saltarse un ciclo por diferencias en la latencia de las respuestas, y la deduplicación de blobs podía omitir un nombre histórico sensible. La revisión de requisitos también detectó el problema del recordatorio. Se corrigieron ambos casos y se añadieron pruebas que reproducen el fallo antes de la corrección: reloj simulado con respuesta inicial lenta y repositorio temporal con un mismo contenido renombrado a .env y de vuelta a un nombre permitido.

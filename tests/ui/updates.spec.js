@@ -12,7 +12,11 @@ async function mockDesktop(page, mode) {
       checkUpdates: async () => {
         window.updateChecks++;
         if (mode === "offline") throw new Error("offline");
-        return mode === "available" || window.updateChecks > 1
+        if (mode === "periodic" && window.updateChecks === 1)
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        return mode === "available" ||
+          mode === "periodic" ||
+          window.updateChecks > 1
           ? { status: "available", update: { version: "99.0.0" } }
           : { status: "current" };
       },
@@ -70,4 +74,21 @@ test("sin conexión se puede seguir escribiendo y se explica el estado de las ac
   await expect(page.getByRole("dialog").getByRole("status")).toContainText(
     "sin conexión",
   );
+});
+test("el recordatorio vuelve en la siguiente comprobación periódica aunque la primera respuesta tarde", async ({
+  page,
+}) => {
+  await page.clock.install({ time: new Date("2026-10-22T10:00:00Z") });
+  await page.clock.pauseAt(new Date("2026-10-22T11:00:00Z"));
+  await mockDesktop(page, "periodic");
+  await page.goto("/");
+  await page.clock.runFor(1100);
+  await expect(
+    page.getByRole("heading", { name: "Hay una nueva versión" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Ahora no", exact: true }).click();
+  await page.clock.fastForward(6 * 60 * 60 * 1000 - 1100);
+  await expect(
+    page.getByRole("heading", { name: "Hay una nueva versión" }),
+  ).toBeVisible();
 });

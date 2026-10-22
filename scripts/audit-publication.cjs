@@ -68,6 +68,29 @@ const files = run(
 for (const file of files)
   if (fs.existsSync(file) && fs.statSync(file).isFile())
     inspect(file, fs.readFileSync(file), "working-tree");
+const historicalPaths = new Set(
+  run("log", "--all", "--format=", "--name-only", "-z", "--no-renames")
+    .toString()
+    .split("\0")
+    .map((name) => name.replace(/^\n+/, ""))
+    .filter(Boolean),
+);
+for (const file of historicalPaths) {
+  if (sensitiveName.test(file) && !file.endsWith(".env.example"))
+    findings.push({ scope: "git-history", file, kind: "sensitive-filename" });
+}
+let builtFiles = 0;
+function inspectBuild(folder) {
+  for (const entry of fs.readdirSync(folder, { withFileTypes: true })) {
+    const file = `${folder}/${entry.name}`;
+    if (entry.isDirectory()) inspectBuild(file);
+    else if (entry.isFile()) {
+      builtFiles++;
+      inspect(file, fs.readFileSync(file), "production-build");
+    }
+  }
+}
+if (fs.existsSync("dist")) inspectBuild("dist");
 const entries = run("rev-list", "--objects", "--all")
   .toString()
   .trim()
@@ -125,6 +148,8 @@ console.log(
     {
       filesInspected: files.length,
       historicalBlobsInspected: blobs,
+      historicalPathsInspected: historicalPaths.size,
+      builtFilesInspected: builtFiles,
       findings: unique,
     },
     null,

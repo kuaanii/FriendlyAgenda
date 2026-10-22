@@ -10,8 +10,8 @@ export function useUpdates() {
     [error, setError] = useState("");
   const mounted = useRef(true),
     running = useRef(false),
-    announced = useRef({ version: "", time: 0 });
-  async function check(manual = false) {
+    announced = useRef("");
+  async function check(manual = false, periodic = false) {
     if (running.current) return;
     running.current = true;
     setChecking(true);
@@ -22,11 +22,9 @@ export function useUpdates() {
       setResult(next);
       if (
         next.status === "available" &&
-        (manual ||
-          announced.current.version !== next.update.version ||
-          Date.now() - announced.current.time >= 6 * 60 * 60 * 1000)
+        (manual || periodic || announced.current !== next.update.version)
       ) {
-        announced.current = { version: next.update.version, time: Date.now() };
+        announced.current = next.update.version;
         setPrompt(true);
       }
     } catch {
@@ -39,7 +37,7 @@ export function useUpdates() {
   useEffect(() => {
     mounted.current = true;
     check();
-    const interval = setInterval(() => check(), 6 * 60 * 60 * 1000);
+    const interval = setInterval(() => check(false, true), 6 * 60 * 60 * 1000);
     const online = () => check();
     window.addEventListener("online", online);
     return () => {
