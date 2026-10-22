@@ -16,7 +16,7 @@ Destino público: https://github.com/kuaanii/FriendlyAgenda. Se comprobó median
 
 ## Actualizaciones
 
-El proceso principal consulta exclusivamente la API pública de Releases del repositorio. La consulta no incluye datos de agenda, credenciales ni identificadores de usuario. Las conexiones web exponen a GitHub la información normal de red, incluida la IP.
+El proceso principal consulta la API pública de Releases del repositorio. Desde 0.3.1, si la API falla o limita peticiones, utiliza los enlaces públicos de versiones y assets de GitHub mediante peticiones HEAD sin descargar contenido del ejecutable. La consulta no incluye datos de agenda, credenciales ni identificadores de usuario. Las conexiones web exponen a GitHub la información normal de red, incluida la IP.
 
 Se comprueba al arrancar, cada seis horas y al recuperar la conexión. Sin conexión la agenda permanece utilizable. Solo se ofrecen versiones estables mayores que la instalada y ejecutables de Windows con nombre y URL exactos del repositorio. La elección del usuario abre la descarga en el navegador; la aplicación no instala actualizaciones automáticamente.
 
@@ -27,3 +27,5 @@ Pruebas añadidas: comparación numérica de versiones, rechazo de borradores y 
 La revisión de estándares encontró dos problemas: el recordatorio periódico podía saltarse un ciclo por diferencias en la latencia de las respuestas, y la deduplicación de blobs podía omitir un nombre histórico sensible. La revisión de requisitos también detectó el problema del recordatorio. Se corrigieron ambos casos y se añadieron pruebas que reproducen el fallo antes de la corrección: reloj simulado con respuesta inicial lenta y repositorio temporal con un mismo contenido renombrado a .env y de vuelta a un nombre permitido.
 
 Ambos revisores confirmaron las correcciones en el commit 1fadca4, sin defectos pendientes en esos hallazgos. Verificación final: 10 pruebas del modelo, almacenamiento, actualizaciones y auditoría; 16 pruebas de interfaz; y una prueba de escritorio sobre el programa empaquetado. Todas superadas. La auditoría de publicación no detectó hallazgos en archivos actuales, historial completo y recursos compilados.
+
+Después de publicar 0.3.0 se comprobó que la API anónima estaba limitada desde la red de verificación. La versión 0.3.1 añade una alternativa de consulta pública, probada contra la publicación real, y dos regresiones sobre límites de API y rechazo de redirecciones externas. La alternativa validó la versión y la existencia del ejecutable sin descargarlo.

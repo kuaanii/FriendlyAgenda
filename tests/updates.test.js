@@ -66,3 +66,59 @@ test("no tener releases o estar sin red no impide utilizar la agenda", async () 
   });
   assert.equal((await offline.check()).status, "unavailable");
 });
+test("si la API limita peticiones comprueba la release pública y la existencia del ejecutable sin descargarlo", async () => {
+  const calls = [];
+  const checker = createUpdateChecker({
+    currentVersion: "0.3.0",
+    request: async (url, options) => {
+      calls.push(url);
+      assert.equal(options.body, undefined);
+      assert.equal(options.headers.Authorization, undefined);
+      if (calls.length === 1) return new Response("", { status: 403 });
+      assert.equal(options.method, "HEAD");
+      assert.equal(options.redirect, "manual");
+      if (calls.length === 2)
+        return new Response(null, {
+          status: 302,
+          headers: {
+            location:
+              "https://github.com/kuaanii/FriendlyAgenda/releases/tag/v0.4.0",
+          },
+        });
+      assert.equal(
+        url,
+        "https://github.com/kuaanii/FriendlyAgenda/releases/download/v0.4.0/FriendlyAgenda-0.4.0-Windows.exe",
+      );
+      return new Response(null, {
+        status: 302,
+        headers: {
+          location:
+            "https://release-assets.githubusercontent.com/github-production-release-asset/123/file?signature=fixture",
+        },
+      });
+    },
+  });
+  assert.equal((await checker.check()).status, "available");
+  assert.equal(calls.length, 3);
+});
+test("la alternativa pública rechaza redirecciones ajenas al repositorio o a los assets de GitHub", async () => {
+  for (const unsafeStep of [2, 3]) {
+    let calls = 0;
+    const checker = createUpdateChecker({
+      currentVersion: "0.3.0",
+      request: async () => {
+        calls++;
+        if (calls === 1) return new Response("", { status: 403 });
+        const location =
+          calls === unsafeStep
+            ? "https://example.com/file.exe"
+            : calls === 2
+              ? "https://github.com/kuaanii/FriendlyAgenda/releases/tag/v0.4.0"
+              : "https://release-assets.githubusercontent.com/github-production-release-asset/123/file";
+        return new Response(null, { status: 302, headers: { location } });
+      },
+    });
+    assert.equal((await checker.check()).status, "unavailable");
+    assert.equal(checker.downloadUrl(), null);
+  }
+});

@@ -45,6 +45,52 @@ export function createUpdateChecker({
   let lastCheck = -Infinity,
     cached = null,
     inFlight = null;
+  async function fetchLatestPage() {
+    const options = {
+      method: "HEAD",
+      headers: { "User-Agent": "FriendlyAgenda-update-check" },
+      redirect: "manual",
+      signal: AbortSignal.timeout(8000),
+    };
+    const latest = await request(`${RELEASES_URL}/latest`, options);
+    if (latest.status === 404) return { status: "no-release" };
+    if (latest.status !== 302) throw new Error("Release page unavailable");
+    const location = new URL(
+      latest.headers.get("location") || "",
+      RELEASES_URL,
+    );
+    const tag = location.pathname.match(
+      /^\/kuaanii\/FriendlyAgenda\/releases\/tag\/(v?\d+\.\d+\.\d+)$/,
+    )?.[1];
+    if (
+      location.origin !== "https://github.com" ||
+      location.search ||
+      location.hash ||
+      !tag
+    )
+      throw new Error("Invalid release redirect");
+    const candidate = { tag_name: tag, draft: false, prerelease: false };
+    const version = newerRelease(candidate, currentVersion);
+    if (!version) return { status: "current" };
+    const url = `${RELEASES_URL}/download/${tag}/FriendlyAgenda-${version}-Windows.exe`;
+    const asset = await request(url, {
+      ...options,
+      signal: AbortSignal.timeout(8000),
+    });
+    if (asset.status === 404) return { status: "no-download" };
+    if (asset.status !== 302) throw new Error("Download unavailable");
+    const target = new URL(asset.headers.get("location") || "");
+    if (
+      target.protocol !== "https:" ||
+      target.hostname !== "release-assets.githubusercontent.com" ||
+      target.username ||
+      target.password ||
+      target.port ||
+      !target.pathname.startsWith("/github-production-release-asset/")
+    )
+      throw new Error("Invalid asset redirect");
+    return { status: "available", update: { version, url } };
+  }
   async function fetchRelease() {
     lastCheck = now();
     try {
@@ -92,7 +138,7 @@ export function createUpdateChecker({
               : "current",
           };
     } catch {
-      return { status: "unavailable" };
+      return fetchLatestPage().catch(() => ({ status: "unavailable" }));
     }
   }
   return {

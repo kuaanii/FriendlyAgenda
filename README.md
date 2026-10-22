@@ -6,7 +6,7 @@ Una agenda de papel, en digital. Aplicación de escritorio para Windows, de cód
 
 ## Usar la aplicación
 
-Descarga `FriendlyAgenda-0.3.0-Windows.exe` desde [las versiones publicadas](https://github.com/kuaanii/FriendlyAgenda/releases/latest). Cierra primero la versión anterior si sigue abierta. Es un ejecutable portable para Windows x64: no requiere instalación ni cuenta. Esta versión no tiene firma digital. Usa la misma carpeta de datos que las versiones anteriores.
+Descarga `FriendlyAgenda-0.3.1-Windows.exe` desde [las versiones publicadas](https://github.com/kuaanii/FriendlyAgenda/releases/latest). Cierra primero la versión anterior si sigue abierta. Es un ejecutable portable para Windows x64: no requiere instalación ni cuenta. Esta versión no tiene firma digital. Usa la misma carpeta de datos que las versiones anteriores.
 
 - Cada doble página muestra cuatro días consecutivos, dos en cada hoja. Las flechas avanzan o retroceden cuatro días; el calendario permite saltar a otra fecha.
 - Pulsa el espacio de notas para escribir. Selecciona texto y usa los botones de negrita, cursiva, subrayado, color o listas. También funcionan los atajos habituales de edición.
@@ -25,7 +25,7 @@ La aplicación de Windows guarda automáticamente en `%APPDATA%/FriendlyAgenda/d
 
 Desde la versión 0.3.0 se comprueban las versiones estables publicadas en GitHub al abrir la aplicación, cada seis horas y al recuperar la conexión. Si hay una versión superior con un ejecutable para Windows, aparece un aviso con **Ahora no** y **Descargar nueva versión**. Si se pospone, vuelve a avisar en la siguiente apertura o comprobación periódica. También puedes comprobarlo en **Mi espacio → Buscar actualizaciones**.
 
-La consulta se limita a la API pública de `kuaanii/FriendlyAgenda`. No envía notas, asignaturas, credenciales ni identificadores de usuario; GitHub recibe los datos normales de una conexión web, como la dirección IP. Sin Internet la agenda sigue funcionando. No descarga ni instala nada automáticamente: la descarga oficial se abre en el navegador cuando la eliges. Los cambios de código o las etiquetas sin una GitHub Release con ejecutable no generan un aviso de actualización.
+La consulta usa la API pública de `kuaanii/FriendlyAgenda`. Desde 0.3.1, si la API está limitada o falla, se comprueba el enlace público de la última Release y la existencia del ejecutable mediante peticiones de cabecera, sin descargarlo. Solo se aceptan enlaces del repositorio y de los assets oficiales de GitHub. No envía notas, asignaturas, credenciales ni identificadores de usuario; GitHub recibe los datos normales de una conexión web, como la dirección IP. Sin Internet la agenda sigue funcionando. No descarga ni instala nada automáticamente: la descarga oficial se abre en el navegador cuando la eliges. Los cambios de código o las etiquetas sin una GitHub Release con ejecutable no generan un aviso de actualización.
 
 Las versiones anteriores a 0.3.0 deben actualizarse manualmente una vez para incorporar esta función.
 
