@@ -37,7 +37,12 @@ import {
   CalendarDays,
   ArrowRight,
   Trash2,
+  Maximize2,
+  Minimize2,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
+import { version } from "../package.json";
 import {
   addDays,
   spreadDates,
@@ -443,7 +448,9 @@ function App() {
     [settings, setSettings] = useState(false),
     [subjectsOpen, setSubjectsOpen] = useState(false),
     [pendingImport, setPendingImport] = useState(null),
-    [deletedEntry, setDeletedEntry] = useState(null);
+    [deletedEntry, setDeletedEntry] = useState(null),
+    [immersive, setImmersive] = useState(false),
+    [sidebarHidden, setSidebarHidden] = useState(false);
   const [newSubject, setNewSubject] = useState(""),
     [subjectColor, setSubjectColor] = useState("#9c82c8");
   const revision = useRef(0),
@@ -484,6 +491,9 @@ function App() {
   }, [notice]);
   useEffect(() => {
     const key = (e) => {
+      if (e.key === "Escape" && !document.querySelector("dialog[open]")) {
+        setImmersive(false);
+      }
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
         setSearch("");
@@ -597,8 +607,10 @@ function App() {
   }
   return (
     <FeedbackContext.Provider value={{ error, dismiss: () => setError("") }}>
-      <div className="app-shell">
-        <aside className="sidebar">
+      <div
+        className={`app-shell ${immersive ? "immersive" : ""} ${sidebarHidden ? "sidebar-collapsed" : ""}`}
+      >
+        <aside className="sidebar" id="agenda-sidebar">
           <a className="brand" href="#" onClick={(e) => e.preventDefault()}>
             <span className="brand-icon">
               <BookOpen size={23} />
@@ -695,9 +707,27 @@ function App() {
         </aside>
         <main className="main-content">
           <header className="topbar">
-            <span>
-              <span className="tiny-dot" /> TU AGENDA PERSONAL
-            </span>
+            <div className="topbar-navigation">
+              <IconButton
+                label={
+                  sidebarHidden
+                    ? "Mostrar menú lateral"
+                    : "Ocultar menú lateral"
+                }
+                aria-expanded={!sidebarHidden}
+                aria-controls="agenda-sidebar"
+                onClick={() => setSidebarHidden((hidden) => !hidden)}
+              >
+                {sidebarHidden ? (
+                  <PanelLeftOpen size={18} />
+                ) : (
+                  <PanelLeftClose size={18} />
+                )}
+              </IconButton>
+              <span>
+                <span className="tiny-dot" /> TU AGENDA PERSONAL
+              </span>
+            </div>
             <div className="topbar-right">
               <span
                 className={`save-state ${status === "Error al guardar" ? "save-error" : ""}`}
@@ -740,6 +770,14 @@ function App() {
                 </h2>
               </div>
               <div className="date-controls">
+                {immersive && (
+                  <span
+                    className={`focus-save ${status === "Error al guardar" ? "save-error" : ""}`}
+                    role="status"
+                  >
+                    {status}
+                  </span>
+                )}
                 <button
                   className="today-button"
                   onClick={() => navigate(today())}
@@ -763,6 +801,26 @@ function App() {
                     <ChevronRight size={18} />
                   </IconButton>
                 </div>
+                <button
+                  className="immersion-button"
+                  aria-label={
+                    immersive ? "Salir del modo agenda" : "Ampliar agenda"
+                  }
+                  aria-pressed={immersive}
+                  title={
+                    immersive
+                      ? "Salir del modo agenda (Esc)"
+                      : "La agenda, a toda ventana"
+                  }
+                  onClick={() => setImmersive((value) => !value)}
+                >
+                  {immersive ? (
+                    <Minimize2 size={16} />
+                  ) : (
+                    <Maximize2 size={16} />
+                  )}
+                  <span>{immersive ? "Volver" : "Ampliar agenda"}</span>
+                </button>
               </div>
             </section>
             <div className="book-wrap">
@@ -1041,7 +1099,7 @@ function App() {
               <BookOpen size={20} />
               <span>
                 FriendlyAgenda{" "}
-                <small>Versión 0.1.0 · Código abierto · Licencia MIT</small>
+                <small>Versión {version} · Código abierto · Licencia MIT</small>
               </span>
             </div>
           </Modal>

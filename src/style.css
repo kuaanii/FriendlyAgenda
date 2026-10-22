@@ -35,6 +35,12 @@
 }
 * {
   box-sizing: border-box;
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 body {
   margin: 0;
@@ -369,7 +375,7 @@ a:focus-visible {
   justify-content: space-between;
   padding: 0 44px;
 }
-.topbar > span {
+.topbar-navigation > span {
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 1.4px;
@@ -377,6 +383,122 @@ a:focus-visible {
   align-items: center;
   gap: 8px;
   color: var(--muted);
+}
+.topbar-navigation {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sidebar-collapsed > .sidebar {
+  display: none;
+}
+.immersion-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 8px 11px;
+  border-radius: 6px;
+  color: var(--purple);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.immersion-button[aria-pressed="true"] {
+  background: var(--soft);
+}
+.focus-save {
+  font-size: 10px;
+  color: var(--muted);
+}
+.immersive {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+.immersive > .sidebar,
+.immersive .topbar,
+.immersive .welcome,
+.immersive .under-book,
+.immersive .upcoming-section,
+.immersive .main-footer {
+  display: none;
+}
+.immersive .main-content {
+  height: 100%;
+}
+.immersive .workspace {
+  height: 100%;
+  max-width: none;
+  padding: 18px 26px 22px;
+  display: flex;
+  flex-direction: column;
+}
+.immersive .agenda-controls {
+  flex-shrink: 0;
+  margin-bottom: 14px;
+  min-height: 38px;
+}
+.immersive .book-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  box-shadow: 0 14px 40px #40332214;
+}
+.immersive .format-toolbar,
+.immersive .filter-banner {
+  flex-shrink: 0;
+}
+.immersive .book {
+  flex: 1;
+  min-height: 0;
+}
+.immersive .paper {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) auto;
+  min-height: 0;
+  padding: 0 clamp(24px, 4vw, 76px);
+}
+.immersive .day {
+  min-height: 0;
+  overflow: auto;
+  padding-top: clamp(16px, 2.5vh, 30px);
+  padding-bottom: 18px;
+}
+.immersive .day-heading,
+.immersive .entries,
+.immersive .add-entry {
+  flex-shrink: 0;
+}
+.immersive .day-number {
+  font-size: clamp(36px, 4vh, 48px);
+  min-width: 52px;
+}
+.immersive .day-heading h2 {
+  font-size: 14px;
+}
+.immersive .note-editor {
+  min-height: 85px;
+  flex-shrink: 0;
+  background-image: linear-gradient(
+    to bottom,
+    transparent 28px,
+    color-mix(in srgb, var(--line) 60%, transparent) 28px,
+    color-mix(in srgb, var(--line) 60%, transparent) 29px
+  );
+  background-size: 100% 29px;
+}
+.immersive .tiptap {
+  min-height: 100%;
+  background-image: none;
+  font-size: 14px;
+}
+.immersive .page-footer {
+  padding: 14px 0;
 }
 .tiny-dot {
   height: 5px;

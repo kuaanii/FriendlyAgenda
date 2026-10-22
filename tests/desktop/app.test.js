@@ -48,6 +48,25 @@ test(
         .getByRole("status")
         .filter({ hasText: "Todo guardado" })
         .waitFor();
+      await page
+        .getByRole("button", { name: "Ocultar menú lateral", exact: true })
+        .click();
+      assert.equal(await page.locator(".sidebar").isVisible(), false);
+      await page
+        .getByRole("button", { name: "Ampliar agenda", exact: true })
+        .click();
+      assert.equal(await page.locator(".welcome").isVisible(), false);
+      const book = await page.locator(".book").boundingBox();
+      assert.ok(book.width > (await page.evaluate(() => innerWidth * 0.9)));
+      await page.screenshot({
+        path: "docs/screenshots/escritorio-inmersivo-verificado.png",
+      });
+      await page.keyboard.press("Escape");
+      assert.equal(await page.locator(".welcome").isVisible(), true);
+      assert.equal(await page.locator(".sidebar").isVisible(), false);
+      await page
+        .getByRole("button", { name: "Mostrar menú lateral", exact: true })
+        .click();
       await app.close();
       app = null;
       const saved = JSON.parse(

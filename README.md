@@ -6,13 +6,16 @@ Una agenda de papel, en digital. Aplicación de escritorio para Windows, de cód
 
 ## Usar la aplicación
 
-Abre `release/FriendlyAgenda-0.1.0-Windows.exe`. Es un ejecutable portable para Windows x64: no requiere instalación ni cuenta. Esta versión inicial no tiene firma digital.
+Abre `release/FriendlyAgenda-0.2.0-Windows.exe`. Cierra primero la versión anterior si sigue abierta. Es un ejecutable portable para Windows x64: no requiere instalación ni cuenta. Esta versión no tiene firma digital. Usa la misma carpeta de datos que la versión 0.1.0.
 
 - Cada doble página muestra cuatro días consecutivos, dos en cada hoja. Las flechas avanzan o retroceden cuatro días; el calendario permite saltar a otra fecha.
 - Pulsa el espacio de notas para escribir. Selecciona texto y usa los botones de negrita, cursiva, subrayado, color o listas. También funcionan los atajos habituales de edición.
 - Añade deberes o exámenes desde **Nuevo apunte** o desde un día. Pulsa un apunte para editar su título, fecha, tipo o asignatura; su casilla permite completarlo.
 - Crea o cambia el nombre y color de asignaturas con el botón **+** de la barra lateral. Al elegir una asignatura se filtran los apuntes; las notas libres siguen visibles.
 - Busca notas y apuntes con **Ctrl+K**. El tema claro u oscuro se recuerda.
+- **Ampliar agenda**, junto a las fechas, dedica toda la ventana a la doble página. **Volver** o **Esc** recuperan la página principal. Las notas y las fechas se mantienen al cambiar de modo. Si hay un diálogo abierto, **Esc** cierra primero ese diálogo.
+- El botón de la esquina superior izquierda oculta y vuelve a mostrar el menú lateral.
+- Las barras de desplazamiento están ocultas. Puedes seguir desplazándote con la rueda, el trackpad y el teclado. En el modo ampliado, cada día permite desplazar sus notas largas de forma independiente.
 
 ## Datos y copias
 
