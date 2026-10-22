@@ -14,3 +14,5 @@ El formato se amplía de manera compatible para leer agendas anteriores. Las ver
 ## Verificación
 
 Pruebas de calendario y cambios de horario, recurrencias y excepciones, todo el día, CSV, importación sin pérdida ni duplicados, temporización y repetición de avisos, historial tras reiniciar, tipos, validación, tema del sistema, preferencias de notificaciones y vista previa. Las pruebas de integración de escritorio ejercitan el worker, IPC, disco, registro de notificaciones de Windows y cierre/restauración de la bandeja; simulan únicamente la entrega visual del aviso para evitar permisos y alertas reales en CI.
+
+La [ejecución final de escritorio](https://github.com/kuaanii/FriendlyAgenda/actions/runs/39798826574) generó Windows x64, macOS Apple Silicon y macOS Intel desde `3acc6a7`, con 28 pruebas de lógica, 23 de interfaz y dos de escritorio por plataforma. Las auditorías de publicación no encontraron datos personales ni secretos. Los tres paquetes y el código fuente de ese commit están en la [versión 0.5.0](https://github.com/kuaanii/FriendlyAgenda/releases/tag/v0.5.0), con sumas SHA-256 verificadas. El actualizador selecciona correctamente los tres destinos.

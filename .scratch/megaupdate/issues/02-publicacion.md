@@ -1,13 +1,13 @@
 # Publicar la versión 0.5.0
 
-Status: Waiting for input
+Status: Done
 
-Labels: ready-for-human
-
-Blocked by: restaurar la sesión de GitHub de kuaanii en Git Credential Manager.
+Labels: ready-for-agent
 
 ## Comments
 
-El código inicial está subido y los tres paquetes han pasado GitHub Actions, ejecución 39773880971. Los ajustes finales están confirmados localmente. La cuenta personal dejó de estar disponible en Git Credential Manager durante la revisión; se ha solicitado iniciar sesión con `git credential-manager github login --username kuaanii --browser`. No utilizar la cuenta del instituto para publicar.
+Sesión personal de kuaanii restaurada y cambios finales subidos. La ejecución Desktop builds 39798826574 generó los tres paquetes desde 3acc6a758dbe033317d9bc44b19c0f776f09483b. Los registros completos confirman 28 pruebas de lógica, 23 de interfaz, dos pruebas contra la aplicación empaquetada y auditoría sin hallazgos en Windows x64, macOS arm64 y macOS x64. Las firmas de integridad de Mac se verificaron durante el trabajo.
 
-Cuando se restaure: subir main, ejecutar Desktop builds sobre el commit final, comprobar los tres trabajos, descargar y verificar sus artefactos, preparar el archivo de código fuente y SHA256SUMS-0.5.0.txt, publicar la Release estable v0.5.0 con los cinco archivos y comprobar los enlaces del actualizador para Windows, macOS arm64 y macOS x64. Las notas y los ayudantes de publicación están preparados en release/, que está excluido del repositorio.
+Los tres archivos de artefactos se descargaron y sus SHA-256 coincidieron con GitHub antes de extraerlos. Publicada la versión estable v0.5.0 desde kuaanii, con los tres ejecutables, código fuente del mismo commit y SHA256SUMS-0.5.0.txt. Los cinco archivos publicados coinciden en tamaño y SHA-256 con los locales. La etiqueta apunta al commit compilado.
+
+El comprobador de actualizaciones de la aplicación, sin credenciales, detecta 0.5.0 y selecciona el archivo correcto para Windows, Mac Apple Silicon y Mac Intel. Publicación: https://github.com/kuaanii/FriendlyAgenda/releases/tag/v0.5.0. Compilación: https://github.com/kuaanii/FriendlyAgenda/actions/runs/39798826574.
