@@ -508,7 +508,7 @@ function App() {
       .catch((e) => {
         if (revision.current === r) {
           setStatus("Error al guardar");
-          setError(e.message || "operationError");
+          setError("saveError");
         }
       });
   }, [data]);

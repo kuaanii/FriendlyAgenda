@@ -11,16 +11,17 @@
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
+    "postinstall": "node node_modules/electron/install.js",
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
     "test": "node --test tests/*.test.js",
     "start": "electron .",
-    "pack": "vite build && electron-builder --win portable --x64",
+    "pack": "vite build && electron-builder --win portable --x64 --publish never",
     "test:ui": "playwright test",
     "format:check": "prettier --check src electron tests build/*.cjs *.js *.json",
     "test:desktop": "node --test tests/desktop/*.test.js",
     "audit:publication": "node scripts/audit-publication.cjs",
-    "pack:win": "vite build && electron-builder --win portable --x64",
+    "pack:win": "vite build && electron-builder --win portable --x64 --publish never",
     "pack:mac": "vite build && electron-builder --mac dmg --publish never"
   },
   "build": {

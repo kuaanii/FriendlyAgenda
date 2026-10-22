@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { translate, formatDate, languages } from "./i18n.js";
+import { Languages } from "lucide-react";
 
 const Context = createContext(null);
 export function I18nProvider({ children }) {
@@ -28,7 +29,7 @@ export function LanguagePicker({ onChange }) {
   const { locale, t } = useI18n();
   return (
     <label className="language-picker" title={t("Language")}>
-      <span aria-hidden="true">◎</span>
+      <Languages size={15} aria-hidden="true" />
       <select
         aria-label={t("Language")}
         value={locale}
