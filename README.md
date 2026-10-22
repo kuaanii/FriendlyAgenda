@@ -10,9 +10,9 @@ Descarga la versión de tu ordenador desde [la última versión publicada](https
 
 | Sistema                                          | Archivo                                |
 | ------------------------------------------------ | -------------------------------------- |
-| Windows x64                                      | `FriendlyAgenda-0.4.0-Windows.exe`     |
-| Mac con Apple Silicon (M1, M2, M3 y posteriores) | `FriendlyAgenda-0.4.0-macOS-arm64.dmg` |
-| Mac con procesador Intel                         | `FriendlyAgenda-0.4.0-macOS-x64.dmg`   |
+| Windows x64                                      | `FriendlyAgenda-0.5.0-Windows.exe`     |
+| Mac con Apple Silicon (M1, M2, M3 y posteriores) | `FriendlyAgenda-0.5.0-macOS-arm64.dmg` |
+| Mac con procesador Intel                         | `FriendlyAgenda-0.5.0-macOS-x64.dmg`   |
 
 En Windows, abre el ejecutable portable; no necesita instalación. En Mac, abre el DMG, arrastra **FriendlyAgenda** a **Aplicaciones**, expulsa la imagen y abre la aplicación desde Aplicaciones. Puedes comprobar el procesador en ** → Acerca de este Mac**. Cierra la versión anterior antes de sustituirla.
 
@@ -22,9 +22,10 @@ La interfaz arranca en **inglés** por defecto. El selector **English / Español
 
 - Cada doble página muestra cuatro días consecutivos, dos en cada hoja. Las flechas avanzan o retroceden cuatro días; el calendario permite saltar a otra fecha.
 - Pulsa el espacio de notas para escribir. Selecciona texto y usa los botones de negrita, cursiva, subrayado, color o listas. También funcionan los atajos habituales de edición.
-- Añade deberes o exámenes desde **Nuevo apunte** o desde un día. Pulsa un apunte para editar su título, fecha, tipo o asignatura; su casilla permite completarlo.
+- Añade apuntes desde **Nuevo apunte** o desde un día. Tipos disponibles: deber, examen, entrega, cumpleaños, reunión, cita, clase, estudio, vacaciones, evento y otro. Pulsa un apunte para editarlo; su casilla permite completarlo.
+- Elige **Todo el día** o una **Hora de entrega o inicio**, con hora de fin opcional. Puedes añadir lugar, detalles y un recordatorio: a la hora indicada, 5/15/30/60 minutos antes o un día antes. Las horas son locales al ordenador.
 - Crea o cambia el nombre y color de asignaturas con el botón **+** de la barra lateral. Al elegir una asignatura se filtran los apuntes; las notas libres siguen visibles.
-- Busca notas y apuntes con **Ctrl+K** en Windows o **⌘K** en Mac. El tema claro u oscuro se recuerda.
+- Busca notas y apuntes con **Ctrl+K** en Windows o **⌘K** en Mac. Las agendas nuevas siguen el tema del sistema y cambian al instante cuando este cambia. En **Mi espacio → Apariencia** puedes elegir Sistema, claro u oscuro; la preferencia se recuerda. Las agendas anteriores conservan su elección de tema.
 - **Ampliar agenda**, junto a las fechas, dedica toda la ventana a la doble página. **Volver** o **Esc** recuperan la página principal. Las notas y las fechas se mantienen al cambiar de modo. Si hay un diálogo abierto, **Esc** cierra primero ese diálogo.
 - El botón de la esquina superior izquierda oculta y vuelve a mostrar el menú lateral.
 - Las barras de desplazamiento están ocultas. Puedes seguir desplazándote con la rueda, el trackpad y el teclado. En ambas vistas, cada día permite desplazar sus notas largas de forma independiente sin invadir el siguiente día.
@@ -32,6 +33,29 @@ La interfaz arranca en **inglés** por defecto. El selector **English / Español
 ## Datos y copias
 
 La aplicación guarda automáticamente en `%APPDATA%/FriendlyAgenda/data/agenda.json` en Windows y en `~/Library/Application Support/FriendlyAgenda/data/agenda.json` en Mac. **Mi espacio → Abrir carpeta de datos** muestra la ubicación exacta. No requiere cuenta ni usa telemetría, fuentes remotas o un servidor para guardar tu agenda.
+
+## Recordatorios y segundo plano
+
+En **Mi espacio → Notificaciones**, activa **Avisarme de los apuntes pendientes** y usa **Probar notificación**. Windows o macOS deben permitir los avisos de FriendlyAgenda; el modo Concentración / No molestar puede ocultarlos. En Windows, al habilitarlos se prepara un acceso al menú Inicio para registrar la identidad de las notificaciones. Conserva el ejecutable en una carpeta permanente.
+
+Cada apunte tiene su propio recordatorio, que puede desactivarse. Los apuntes antiguos sin ese ajuste usan la hora prevista al activar las notificaciones. Los de todo el día avisan a las 09:00 por defecto; esa hora se puede cambiar. Los completados dejan de avisar. Si un aviso se perdió con la aplicación cerrada o el equipo suspendido, se recupera al volver a ejecutarse. Los atrasados se recuerdan una vez al día, a la hora configurada, durante un máximo de siete días. Se conserva un historial local para evitar repetir los ya mostrados.
+
+Con **Mantener en segundo plano al cerrar** activado, cerrar la ventana conserva la agenda junto al reloj de Windows o en la barra de menús de Mac. Ese icono permite **Abrir agenda** y **Salir de FriendlyAgenda**. Al desactivar esta opción, cerrar la ventana termina la aplicación cuando las notificaciones están activadas. **La aplicación debe seguir ejecutándose para avisar**: no arranca automáticamente con el ordenador, no avisa con el equipo apagado y no lo despierta. No necesita conexión a Internet.
+
+## Importar calendarios
+
+Abre **Mi espacio → Importar calendario**, elige el intervalo de fechas y el archivo exportado. La vista previa permite seleccionar apuntes antes de añadirlos. **La importación conserva las notas y apuntes existentes** y omite los eventos ya importados, manteniendo las ediciones hechas en la agenda. Es una importación puntual, sin sincronización ni acceso a tus cuentas.
+
+| Origen                                  | Archivo local                                                                         |
+| --------------------------------------- | ------------------------------------------------------------------------------------- |
+| Google Calendar                         | `.ics` de su exportación; descomprime primero el ZIP. También admite su CSV habitual. |
+| Microsoft Outlook                       | `.ics` o CSV de calendario.                                                           |
+| Apple Calendar                          | Exportación `.ics`.                                                                   |
+| Yahoo Calendar, Proton Calendar y otros | Exportación iCalendar `.ics` compatible.                                              |
+
+Para CSV, selecciona día/mes/año o mes/día/año según la exportación. Las fechas ISO también se aceptan. En ICS se respetan las zonas horarias, las exclusiones y las excepciones de las series; las horas se convierten a la zona del ordenador en el momento de importar. Los eventos de todo el día mantienen su fecha. Las repeticiones del intervalo y los eventos de varios días se convierten en apuntes independientes. No se crean series que se prolonguen indefinidamente: importa otro intervalo cuando lo necesites.
+
+Se conservan título, lugar y descripción como texto. Las alarmas originales no se importan: puedes activar nuevos recordatorios para la selección en la vista previa. No se importan adjuntos, asistentes ni tareas VTODO. Se admiten archivos de hasta 20 MB, intervalos de hasta cinco años y un máximo de 5.000 apuntes por importación. Los archivos inválidos o demasiado complejos se rechazan; el análisis se ejecuta fuera del proceso principal para mantener la aplicación disponible.
 
 ## Actualizaciones
 
@@ -49,7 +73,7 @@ Los datos se guardan en el perfil del usuario, separados de la aplicación; sust
 
 ## Desarrollo
 
-Requisitos: Node.js 24 y pnpm 11. El código usa React, Vite, Tiptap y Electron. Todo el editor y sus recursos se incluyen en el ejecutable.
+Requisitos: Node.js 24 y pnpm 11. El código usa React, Vite, Tiptap y Electron. El análisis de iCalendar utiliza `node-ical` en un worker local, sin descargar calendarios ni recursos de Internet. Todo el editor y sus recursos se incluyen en el ejecutable.
 
 ```powershell
 pnpm install --frozen-lockfile
@@ -76,7 +100,7 @@ pnpm exec playwright test
 pnpm test:desktop
 ```
 
-Para usar un navegador Chromium ya instalado, define `PLAYWRIGHT_EXECUTABLE_PATH` con su ruta. Las pruebas de interfaz usan un perfil temporal independiente.
+Para usar un navegador Chromium ya instalado, define `PLAYWRIGHT_EXECUTABLE_PATH` con su ruta. Las pruebas de interfaz usan un perfil temporal independiente. Las pruebas de avisos simulan la entrega nativa para no mostrar notificaciones reales ni solicitar permisos en los equipos de prueba; verifican el planificador, el historial, el registro de Windows y el ciclo de la bandeja a través de IPC real. Usa **Probar notificación** en tu equipo para comprobar sus permisos y configuración del sistema.
 
 Para verificar el programa empaquetado, define `FRIENDLY_AGENDA_EXE` con la ruta absoluta de `release/win-unpacked/FriendlyAgenda.exe` y ejecuta `pnpm test:desktop`. En Mac, `FRIENDLY_AGENDA_EXE` debe apuntar al ejecutable dentro de `FriendlyAgenda.app/Contents/MacOS/FriendlyAgenda`. El ensayo utiliza una carpeta temporal mediante `FRIENDLY_AGENDA_DATA_DIR`, sin tocar la agenda del usuario.
 

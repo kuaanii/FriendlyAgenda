@@ -1624,6 +1624,8 @@ input[type="color"] {
 .check-setting,
 form label.check-setting {
   display: flex;
+  flex-direction: row;
+  text-align: left;
   align-items: center;
   gap: 10px;
   font-size: 13px;

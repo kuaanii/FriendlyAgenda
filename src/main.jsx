@@ -680,7 +680,7 @@ function App() {
       if (validDate(date)) {
         setStart(date);
         setSettings(false);
-        setEntry(null);
+        setActive(null);
       }
     };
     const unsubscribe = bridge.onReminderDate(navigateReminder);

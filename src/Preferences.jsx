@@ -93,7 +93,7 @@ export function NotificationSettings({ value, onChange }) {
         <input
           type="checkbox"
           checked={preferences.enabled}
-          disabled={status?.supported === false}
+          disabled={!preferences.enabled && status?.supported === false}
           onChange={(e) =>
             onChange({ ...preferences, enabled: e.target.checked })
           }

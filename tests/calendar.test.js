@@ -56,6 +56,18 @@ test("Google/Apple all-day events use exclusive DTEND and retain folded descript
   );
   assert.equal(events[0].entry.description, "Primera línea\nSegunda línea");
 });
+
+test("all-day yearly recurrences retain their calendar date", () => {
+  const source = calendar(
+    event(
+      "UID:fixture-yearly\r\nSUMMARY:Birthday\r\nDTSTART;VALUE=DATE:20261022\r\nDTEND;VALUE=DATE:20261023\r\nRRULE:FREQ=YEARLY;COUNT=2",
+    ),
+  );
+  assert.deepEqual(
+    parseCalendar(source, options).events.map((item) => item.date),
+    ["2026-10-22", "2027-10-22"],
+  );
+});
 test("Outlook Windows zones and modified recurring occurrences are imported", () => {
   const source = calendar(
     event(

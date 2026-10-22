@@ -105,14 +105,28 @@ function parseCsv(source, options) {
       ["subject", "asunto", "objet", "title", "titulo"].includes(h),
     ) ||
     !headers.some((h) =>
-      ["startdate", "fechadeinicio", "fechainicial", "datededebut"].includes(h),
+      [
+        "startdate",
+        "fechadeinicio",
+        "fechainicial",
+        "datededebut",
+        "fechadecomienzo",
+        "comienzo",
+      ].includes(h),
     )
   )
     throw Error("calendarInvalid");
   return rows.map((row, index) => {
     const get = (...names) => find(row, names);
     const date = csvDate(
-      get("startdate", "fechadeinicio", "fechainicial", "datededebut"),
+      get(
+        "startdate",
+        "fechadeinicio",
+        "fechainicial",
+        "datededebut",
+        "fechadecomienzo",
+        "comienzo",
+      ),
       options.dateFormat,
     );
     const start = get(
@@ -120,6 +134,7 @@ function parseCsv(source, options) {
       "horadeinicio",
       "horainicial",
       "heurededebut",
+      "horadecomienzo",
     );
     const allDay =
       ["true", "yes", "1", "si", "oui", "verdadero"].includes(
@@ -128,19 +143,33 @@ function parseCsv(source, options) {
           "eventodetodoeldia",
           "evenementsurlajournee",
           "journeeentiere",
+          "todoeldia",
         ).toLowerCase(),
       ) || !start;
     const time = allDay ? "00:00" : csvTime(start);
-    const endDate =
-      csvDate(
-        get("enddate", "fechadefinalizacion", "fechafinal", "datedefin"),
-        options.dateFormat,
-      ) || date;
+    const endDateValue = get(
+      "enddate",
+      "fechadefinalizacion",
+      "fechafinal",
+      "datedefin",
+      "fechadefin",
+      "finalizacion",
+    );
+    const endDate = endDateValue
+      ? csvDate(endDateValue, options.dateFormat)
+      : date;
+    const endTimeValue = get(
+      "endtime",
+      "horadefinalizacion",
+      "horafinal",
+      "heuredefin",
+      "horadefin",
+    );
     const endTime = allDay
       ? "00:00"
-      : csvTime(
-          get("endtime", "horadefinalizacion", "horafinal", "heuredefin"),
-        ) || time;
+      : endTimeValue
+        ? csvTime(endTimeValue)
+        : time;
     if (!date || !time || !endDate || !endTime) return null;
     const title = get("subject", "asunto", "objet", "title", "titulo");
     return {
