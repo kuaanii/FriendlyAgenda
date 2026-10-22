@@ -465,6 +465,7 @@ a:focus-visible {
 }
 .immersive .day {
   min-height: 0;
+  height: auto;
   overflow: auto;
   padding-top: clamp(16px, 2.5vh, 30px);
   padding-bottom: 18px;
@@ -741,10 +742,12 @@ a:focus-visible {
 }
 .day {
   min-height: 242px;
+  height: 242px;
   display: flex;
   flex-direction: column;
   padding: 22px 0 13px;
-  flex: 1;
+  flex: 0 0 242px;
+  overflow: auto;
 }
 .day + .day {
   border-top: 1px solid var(--line);
@@ -863,6 +866,7 @@ a:focus-visible {
 }
 .note-editor {
   flex: 1;
+  flex-shrink: 0;
   margin-top: 6px;
 }
 .tiptap {
@@ -1349,6 +1353,8 @@ input[type="color"] {
   }
   .day {
     min-height: 290px;
+    height: 290px;
+    flex-basis: 290px;
   }
   .paper {
     padding: 0 37px;

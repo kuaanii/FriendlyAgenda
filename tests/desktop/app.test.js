@@ -96,6 +96,29 @@ test(
         path: "docs/screenshots/escritorio-verificado.png",
         fullPage: true,
       });
+      const firstDay = page.locator(".day").first();
+      const nextDay = page.locator(".day").nth(1);
+      const beforeNote = await nextDay.boundingBox();
+      await firstDay
+        .getByRole("textbox")
+        .fill(
+          Array.from({ length: 80 }, (_, i) => `Línea ${i + 1}`).join("\n"),
+        );
+      const afterNote = await nextDay.boundingBox();
+      assert.ok(Math.abs(afterNote.y - beforeNote.y) < 2);
+      assert.equal(
+        await firstDay.evaluate(
+          (e) =>
+            e.scrollHeight > e.clientHeight &&
+            getComputedStyle(e).overflowY === "auto" &&
+            getComputedStyle(e).scrollbarWidth === "none",
+        ),
+        true,
+      );
+      await page
+        .getByRole("status")
+        .filter({ hasText: "Todo guardado" })
+        .waitFor();
     } finally {
       if (app) await app.close();
       assert.ok(
