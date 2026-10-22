@@ -50,9 +50,14 @@ test(
           ),
         );
         assert.ok(
-          identity.command.includes(
-            process.env.FRIENDLY_AGENDA_EXE || "electron",
-          ),
+          identity.command
+            .replaceAll("\\", "/")
+            .toLowerCase()
+            .includes(
+              (process.env.FRIENDLY_AGENDA_EXE || "electron")
+                .replaceAll("\\", "/")
+                .toLowerCase(),
+            ),
         );
       }
       const errors = [];
