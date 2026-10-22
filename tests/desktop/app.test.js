@@ -147,8 +147,12 @@ test(
         .waitFor();
       if (process.platform === "darwin") {
         const newWindow = app.waitForEvent("window");
-        await app.evaluate(({ app, BrowserWindow }) => {
-          BrowserWindow.getAllWindows()[0].close();
+        await app.evaluate(async ({ app, BrowserWindow }) => {
+          const current = BrowserWindow.getAllWindows()[0];
+          await new Promise((resolve) => {
+            current.once("closed", resolve);
+            current.close();
+          });
           app.emit("activate");
         });
         page = await newWindow;
