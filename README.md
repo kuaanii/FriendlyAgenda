@@ -10,9 +10,9 @@ Descarga la versión de tu ordenador desde [la última versión publicada](https
 
 | Sistema                                          | Archivo                                |
 | ------------------------------------------------ | -------------------------------------- |
-| Windows x64                                      | `FriendlyAgenda-0.5.0-Windows.exe`     |
-| Mac con Apple Silicon (M1, M2, M3 y posteriores) | `FriendlyAgenda-0.5.0-macOS-arm64.dmg` |
-| Mac con procesador Intel                         | `FriendlyAgenda-0.5.0-macOS-x64.dmg`   |
+| Windows x64                                      | `FriendlyAgenda-0.5.1-Windows.exe`     |
+| Mac con Apple Silicon (M1, M2, M3 y posteriores) | `FriendlyAgenda-0.5.1-macOS-arm64.dmg` |
+| Mac con procesador Intel                         | `FriendlyAgenda-0.5.1-macOS-x64.dmg`   |
 
 En Windows, abre el ejecutable portable; no necesita instalación. En Mac, abre el DMG, arrastra **FriendlyAgenda** a **Aplicaciones**, expulsa la imagen y abre la aplicación desde Aplicaciones. Puedes comprobar el procesador en ** → Acerca de este Mac**. Cierra la versión anterior antes de sustituirla.
 
