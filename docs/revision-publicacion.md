@@ -25,3 +25,5 @@ Pruebas añadidas: comparación numérica de versiones, rechazo de borradores y 
 ## Revisión independiente
 
 La revisión de estándares encontró dos problemas: el recordatorio periódico podía saltarse un ciclo por diferencias en la latencia de las respuestas, y la deduplicación de blobs podía omitir un nombre histórico sensible. La revisión de requisitos también detectó el problema del recordatorio. Se corrigieron ambos casos y se añadieron pruebas que reproducen el fallo antes de la corrección: reloj simulado con respuesta inicial lenta y repositorio temporal con un mismo contenido renombrado a .env y de vuelta a un nombre permitido.
+
+Ambos revisores confirmaron las correcciones en el commit 1fadca4, sin defectos pendientes en esos hallazgos. Verificación final: 10 pruebas del modelo, almacenamiento, actualizaciones y auditoría; 16 pruebas de interfaz; y una prueba de escritorio sobre el programa empaquetado. Todas superadas. La auditoría de publicación no detectó hallazgos en archivos actuales, historial completo y recursos compilados.
