@@ -10,11 +10,11 @@ Descarga la versión de tu ordenador desde [la última versión publicada](https
 
 | Sistema                                          | Archivo                                |
 | ------------------------------------------------ | -------------------------------------- |
-| Windows x64                                      | `FriendlyAgenda-0.5.1-Windows.exe`     |
-| Mac con Apple Silicon (M1, M2, M3 y posteriores) | `FriendlyAgenda-0.5.1-macOS-arm64.dmg` |
-| Mac con procesador Intel                         | `FriendlyAgenda-0.5.1-macOS-x64.dmg`   |
+| Windows x64                                      | `FriendlyAgenda-0.6.0-Windows.exe`     |
+| Mac con Apple Silicon (M1, M2, M3 y posteriores) | `FriendlyAgenda-0.6.0-macOS-arm64.dmg` |
+| Mac con procesador Intel                         | `FriendlyAgenda-0.6.0-macOS-x64.dmg`   |
 
-En Windows, abre el ejecutable portable; no necesita instalación. En Mac, abre el DMG, arrastra **FriendlyAgenda** a **Aplicaciones**, expulsa la imagen y abre la aplicación desde Aplicaciones. Puedes comprobar el procesador en ** → Acerca de este Mac**. Cierra la versión anterior antes de sustituirla.
+En Windows, guarda el ejecutable portable en una carpeta fija (puedes llamarlo **FriendlyAgenda.exe**) y crea un acceso a ese archivo; no necesita instalación. En Mac, abre el DMG, arrastra **FriendlyAgenda** a **Aplicaciones**, expulsa la imagen y abre la aplicación desde Aplicaciones. Puedes comprobar el procesador en ** → Acerca de este Mac**. Cierra la versión anterior antes del primer reemplazo manual.
 
 Estas versiones no tienen un certificado de distribución comercial. Las aplicaciones de Mac llevan firma ad hoc para comprobar la integridad local, pero no están notarizadas por Apple. macOS puede bloquear la primera apertura: revisa el origen de la descarga y usa **Ajustes del Sistema → Privacidad y seguridad → Abrir igualmente**, si aparece. No es necesario desactivar las protecciones del sistema. Más información en [la ayuda de Apple](https://support.apple.com/es-es/102445).
 
@@ -61,9 +61,11 @@ Se conservan título, lugar y descripción como texto. Las alarmas originales no
 
 Desde la versión 0.3.0 se comprueban las versiones estables publicadas en GitHub al abrir la aplicación, cada seis horas y al recuperar la conexión. Si hay una versión superior con una descarga para tu sistema y arquitectura, aparece un aviso con **Ahora no** y **Descargar nueva versión**. Si se pospone, vuelve a avisar en la siguiente apertura o comprobación periódica. También puedes comprobarlo en **Mi espacio → Buscar actualizaciones**.
 
-La consulta usa la API pública de `kuaanii/FriendlyAgenda`. Desde 0.3.1, si la API está limitada o falla, se comprueba el enlace público de la última Release y la existencia del ejecutable mediante peticiones de cabecera, sin descargarlo. Solo se aceptan enlaces del repositorio y de los assets oficiales de GitHub. No envía notas, asignaturas, credenciales ni identificadores de usuario; GitHub recibe los datos normales de una conexión web, como la dirección IP. Sin Internet la agenda sigue funcionando. No descarga ni instala nada automáticamente: la descarga oficial se abre en el navegador cuando la eliges. Los cambios de código o las etiquetas sin una GitHub Release con ejecutable no generan un aviso de actualización.
+La consulta usa la API pública de `kuaanii/FriendlyAgenda`. Desde 0.3.1, si la API está limitada o falla, se comprueba el enlace público de la última Release y la existencia del ejecutable mediante peticiones de cabecera, sin descargarlo. Solo se aceptan enlaces del repositorio y de los assets oficiales de GitHub. No envía notas, asignaturas, credenciales ni identificadores de usuario; GitHub recibe los datos normales de una conexión web, como la dirección IP. Sin Internet la agenda sigue funcionando. Los cambios de código o las etiquetas sin una GitHub Release con ejecutable no generan un aviso de actualización.
 
-Las versiones anteriores a 0.3.0 deben actualizarse manualmente una vez para incorporar esta función.
+Desde **0.6.0**, al elegir descargar se guarda y verifica la actualización en una caché privada, sin abrir el navegador. **Reiniciar para actualizar** guarda las notas y sustituye el mismo archivo de Windows o el mismo paquete .app de Mac. Se mantienen el acceso y los datos. La copia de recuperación se elimina al comprobar el primer arranque válido. Si no se puede sustituir o iniciar el archivo, se conserva o restaura la versión anterior. La carpeta de la app debe ser escribible; en Mac no se actualiza desde el DMG montado, y el desarrollo no puede sustituir el runtime Electron.
+
+Las versiones **0.5.1 y anteriores** necesitan un último reemplazo manual para incorporar este sistema. Después las actualizaciones se realizan dentro de la app. No se eliminan otras copias o instaladores antiguos que ya hubieras guardado por tu cuenta.
 
 Cada guardado conserva la versión anterior en `agenda.json.bak` y sustituye el archivo principal mediante un archivo temporal. Si el principal está dañado, se intenta recuperar la copia y se conserva el dañado en `agenda.json.corrupt`. Si ambos son ilegibles, la aplicación muestra el error sin sustituirlos.
 

@@ -238,5 +238,19 @@
   "calendarInvalid": "Este archivo no es un calendario válido. Expórtalo como ICS o un CSV compatible y vuelve a intentarlo.",
   "calendarLimit": "El calendario es demasiado grande o complejo. Usa una exportación más pequeña o un intervalo menor (máximo 20 MB / 5.000 apuntes).",
   "calendarRange": "Elige un intervalo de fechas válido de hasta cinco años.",
-  "desktopOnly": "Disponible en la aplicación de escritorio para Windows y macOS."
+  "desktopOnly": "Disponible en la aplicación de escritorio para Windows y macOS.",
+  "updateInPlace": "La actualización se descarga dentro de la app. Al reiniciar sustituye esta instalación y conserva tus apuntes, sin dejar otro ejecutable en Descargas.",
+  "updateReady": "La actualización está verificada. Guarda los apuntes en edición y reinicia para sustituir esta versión en la misma ubicación.",
+  "updateRestart": "Reiniciar para actualizar",
+  "updateDownloading": "Descargando actualización: {progress}%",
+  "updateVerifying": "Verificando actualización…",
+  "updateRestarting": "Reiniciando para instalar…",
+  "updateProgress": "Progreso de la actualización",
+  "updateDownloadError": "No se ha podido descargar la actualización. Tu app actual y tus apuntes se conservan. Vuelve a intentarlo.",
+  "updateIntegrityError": "La verificación ha fallado. No se ha instalado nada. Vuelve a intentarlo.",
+  "updateInstallUnsupported": "El reemplazo automático requiere la app portable de Windows o la app de Mac copiada a Aplicaciones. Está desactivado en desarrollo y al ejecutar desde una imagen de disco de Mac.",
+  "updateInstallError": "La actualización no se ha completado. Se conserva la versión anterior. Comprueba los permisos de la carpeta de la app y vuelve a intentarlo.",
+  "updateNotReady": "Comprueba y descarga una actualización antes de reiniciar.",
+  "updateBusy": "Ya se está preparando una actualización.",
+  "updateUnsavedDraft": "Guarda o cancela el apunte o la importación en edición antes de reiniciar."
 }

@@ -180,5 +180,8 @@ export function createUpdateChecker({
     downloadUrl() {
       return cached?.status === "available" ? cached.update.url : null;
     },
+    availableUpdate() {
+      return cached?.status === "available" ? { ...cached.update } : null;
+    },
   };
 }

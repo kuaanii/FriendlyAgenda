@@ -238,5 +238,19 @@
   "calendarInvalid": "This file is not a valid calendar. Export it as ICS or a supported CSV and try again.",
   "calendarLimit": "This calendar is too large or complex. Use a smaller export or a shorter date range (20 MB / 5,000 entries maximum).",
   "calendarRange": "Choose a valid date range of up to five years.",
-  "desktopOnly": "Available in the Windows and macOS desktop app."
+  "desktopOnly": "Available in the Windows and macOS desktop app.",
+  "updateInPlace": "The update downloads inside the app. When you restart, it replaces this installation and keeps your notes. No extra app executable is left in Downloads.",
+  "updateReady": "The update is verified and ready. Save any open entry, then restart to replace this version in the same location.",
+  "updateRestart": "Restart to update",
+  "updateDownloading": "Downloading update: {progress}%",
+  "updateVerifying": "Verifying update…",
+  "updateRestarting": "Restarting to install…",
+  "updateProgress": "Update download progress",
+  "updateDownloadError": "The update could not be downloaded. Your current app and notes are unchanged. Try again.",
+  "updateIntegrityError": "Update verification failed. Nothing was installed. Try again.",
+  "updateInstallUnsupported": "Automatic replacement requires the Windows portable app or a Mac app copied to Applications. It is disabled in development and when running a Mac disk image.",
+  "updateInstallError": "The update did not complete. The previous version is preserved. Check that the application folder is writable and try again.",
+  "updateNotReady": "Check for updates and download one before restarting.",
+  "updateBusy": "An update is already being prepared.",
+  "updateUnsavedDraft": "Save or cancel the entry or import you are editing before restarting."
 }

@@ -238,5 +238,19 @@
   "calendarInvalid": "Ce fichier n’est pas un calendrier valide. Exporte-le en ICS ou CSV pris en charge et réessaie.",
   "calendarLimit": "Ce calendrier est trop volumineux ou complexe. Utilise un export plus petit ou une période plus courte (20 Mo / 5 000 tâches maximum).",
   "calendarRange": "Choisis une période valide de cinq ans maximum.",
-  "desktopOnly": "Disponible dans l’application de bureau Windows et macOS."
+  "desktopOnly": "Disponible dans l’application de bureau Windows et macOS.",
+  "updateInPlace": "La mise à jour se télécharge dans l’application. Au redémarrage, elle remplace cette installation et conserve vos notes, sans nouvel exécutable dans Téléchargements.",
+  "updateReady": "La mise à jour est vérifiée. Enregistrez toute entrée en cours, puis redémarrez pour remplacer cette version au même emplacement.",
+  "updateRestart": "Redémarrer pour mettre à jour",
+  "updateDownloading": "Téléchargement : {progress}%",
+  "updateVerifying": "Vérification de la mise à jour…",
+  "updateRestarting": "Redémarrage pour installer…",
+  "updateProgress": "Progression de la mise à jour",
+  "updateDownloadError": "Impossible de télécharger la mise à jour. Votre application et vos notes sont conservées. Réessayez.",
+  "updateIntegrityError": "La vérification a échoué. Rien n’a été installé. Réessayez.",
+  "updateInstallUnsupported": "Le remplacement automatique nécessite l’application portable Windows ou l’application Mac copiée dans Applications. Il est désactivé en développement et depuis une image disque Mac.",
+  "updateInstallError": "La mise à jour n’a pas abouti. La version précédente est conservée. Vérifiez les droits du dossier de l’application et réessayez.",
+  "updateNotReady": "Recherchez et téléchargez une mise à jour avant de redémarrer.",
+  "updateBusy": "Une mise à jour est déjà en cours de préparation.",
+  "updateUnsavedDraft": "Enregistrez ou annulez l’entrée ou l’importation en cours avant de redémarrer."
 }

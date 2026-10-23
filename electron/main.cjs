@@ -42,6 +42,8 @@ else {
     const { createStorage } = await import("./storage.mjs");
     const { encodeBackup, decodeBackup } = await import("../src/model.js");
     const { createUpdateChecker } = await import("./updates.mjs");
+    const { createInstaller, installTarget } =
+      await import("./update-install.mjs");
     const { translate, validLocale } = await import("../src/i18n.js");
     const t = (key) => translate(currentLocale, key);
     function setLocale(locale) {
@@ -115,11 +117,33 @@ else {
       arch: process.arch,
     });
     ipcMain.handle("agenda:check-updates", () => updates.check());
+    let target = null;
+    try {
+      target = installTarget({
+        platform: process.platform,
+        packaged: app.isPackaged,
+        executable: process.execPath,
+        portable: process.env.PORTABLE_EXECUTABLE_FILE,
+      });
+    } catch {}
+    const installer = createInstaller({
+      folder: path.join(app.getPath("userData"), "updates"),
+      currentVersion: app.getVersion(),
+      target,
+    });
+    ipcMain.handle("agenda:update-state", () => installer.state());
     ipcMain.handle("agenda:download-update", async () => {
-      const url = updates.downloadUrl();
-      if (!url)
-        throw new Error("Comprueba primero si hay una versión disponible.");
-      await shell.openExternal(url);
+      const update = updates.availableUpdate();
+      if (!update) throw new Error("updateNotReady");
+      return installer.prepare(update);
+    });
+    ipcMain.handle("agenda:install-update", async () => {
+      await Promise.all([...pendingSaves]);
+      if (lastSaveError) throw Error("saveError");
+      await installer.install();
+      closing = true;
+      quitRequested = true;
+      setImmediate(() => app.quit());
       return true;
     });
     const folder = path.join(app.getPath("userData"), "data");
@@ -189,6 +213,7 @@ else {
       const result = await storage.load();
       setLocale(result.data.locale || "en");
       await notifications.configure(result.data);
+      await installer.finish().catch(() => {});
       return result;
     });
     ipcMain.handle("agenda:save", async (_, data) => {

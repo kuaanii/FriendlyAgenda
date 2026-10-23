@@ -18,4 +18,6 @@ contextBridge.exposeInMainWorld("agenda", {
   openFolder: () => ipcRenderer.invoke("agenda:folder"),
   checkUpdates: () => ipcRenderer.invoke("agenda:check-updates"),
   downloadUpdate: () => ipcRenderer.invoke("agenda:download-update"),
+  updateState: () => ipcRenderer.invoke("agenda:update-state"),
+  installUpdate: () => ipcRenderer.invoke("agenda:install-update"),
 });

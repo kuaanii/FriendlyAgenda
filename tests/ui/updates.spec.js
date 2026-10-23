@@ -96,3 +96,83 @@ test("el recordatorio vuelve en la siguiente comprobación periódica aunque la 
     page.getByRole("heading", { name: "Hay una nueva versión" }),
   ).toBeVisible();
 });
+
+test("an update stays inside the app and restarts only after saving the current notes", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.installs = 0;
+    window.prepared = false;
+    window.savedNote = "";
+    window.failSave = false;
+    window.agenda = {
+      load: async () => ({
+        data: {
+          version: 1,
+          locale: "es",
+          theme: "light",
+          subjects: [],
+          days: {},
+        },
+      }),
+      save: async (data) => {
+        if (window.failSave) throw Error("saveError");
+        window.savedNote = JSON.stringify(data);
+        return true;
+      },
+      checkUpdates: async () => ({
+        status: "available",
+        update: { version: "99.0.0" },
+      }),
+      downloadUpdate: async () => {
+        window.prepared = true;
+        return { status: "ready", progress: 100 };
+      },
+      updateState: async () => ({
+        status: window.prepared ? "ready" : "idle",
+        progress: window.prepared ? 100 : 0,
+      }),
+      installUpdate: async () => {
+        window.installs++;
+        return true;
+      },
+    };
+    window.open = () => {
+      throw Error("Updater opened an external browser");
+    };
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Ahora no", exact: true }).click();
+  await page
+    .getByRole("textbox", { name: /Notas del/ })
+    .first()
+    .fill("Conservar antes de reiniciar");
+  await page.getByRole("button", { name: "Mi espacio", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Descargar actualización", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Reiniciar para actualizar" }).last(),
+  ).toBeVisible();
+  expect(await page.evaluate(() => window.installs)).toBe(0);
+  await page.evaluate(() => {
+    window.failSave = true;
+  });
+  await page
+    .getByRole("button", { name: "Reiniciar para actualizar" })
+    .last()
+    .click();
+  await expect(page.getByRole("alert").last()).toBeVisible();
+  expect(await page.evaluate(() => window.installs)).toBe(0);
+  await page.evaluate(() => {
+    window.failSave = false;
+  });
+  await page
+    .getByRole("button", { name: "Reiniciar para actualizar" })
+    .last()
+    .click();
+  expect(await page.evaluate(() => window.installs)).toBe(1);
+  expect(await page.evaluate(() => window.savedNote)).toContain(
+    "Conservar antes de reiniciar",
+  );
+});

@@ -47,6 +47,12 @@ const browserBridge = {
       "Las actualizaciones están disponibles en la aplicación de Windows.",
     );
   },
+  async updateState() {
+    return { status: "idle", progress: 0 };
+  },
+  async installUpdate() {
+    throw new Error("updateInstallUnsupported");
+  },
   async openFolder() {
     throw new Error(
       "La carpeta de datos está disponible en la aplicación de Windows.",

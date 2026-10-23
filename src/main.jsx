@@ -605,7 +605,6 @@ function EntryForm({ entry, subjects, onSave, onDelete, onClose }) {
 
 function App() {
   const { t, locale, setLocale, dateLabel, shortDate } = useI18n();
-  const updates = useUpdates();
   const [data, setData] = useState(null),
     [loadError, setLoadError] = useState(""),
     [start, setStart] = useState(today()),
@@ -623,6 +622,12 @@ function App() {
     [deletedEntry, setDeletedEntry] = useState(null),
     [immersive, setImmersive] = useState(false),
     [sidebarHidden, setSidebarHidden] = useState(false);
+  const updates = useUpdates(async () => {
+    if (entry || pendingImport || calendarOpen)
+      throw Error("updateUnsavedDraft");
+    if (!data) throw Error("saveError");
+    await bridge.save(data);
+  });
   const resolvedTheme = useSystemTheme(data?.theme);
   const [newSubject, setNewSubject] = useState(""),
     [subjectColor, setSubjectColor] = useState("#9c82c8");
