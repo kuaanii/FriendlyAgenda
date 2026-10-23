@@ -313,8 +313,10 @@ test(
     async function bundle(parent, version) {
       const app = path.join(parent, "FriendlyAgenda.app");
       await mkdir(path.join(app, "Contents/MacOS"), { recursive: true });
+      // System tools can be arm64e on Apple Silicon; the release and Node
+      // runtime use arm64. Exercise the exact supported release architecture.
       await copyFile(
-        "/usr/bin/true",
+        process.execPath,
         path.join(app, "Contents/MacOS/FriendlyAgenda"),
       );
       await writeFile(
