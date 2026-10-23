@@ -307,18 +307,24 @@ test(
 
 test(
   "Mac native DMG staging and helper replace a signed app in the same location",
-  { skip: process.platform !== "darwin", timeout: 90000 },
+  { skip: process.platform !== "darwin", timeout: 150000 },
   async () => {
     const folder = await mkdtemp(path.join(tmpdir(), "friendly-update-mac-"));
     async function bundle(parent, version) {
       const app = path.join(parent, "FriendlyAgenda.app");
       await mkdir(path.join(app, "Contents/MacOS"), { recursive: true });
-      // System tools can be arm64e on Apple Silicon; the release and Node
-      // runtime use arm64. Exercise the exact supported release architecture.
-      await copyFile(
-        process.execPath,
+      // A tiny real Mach-O fixture uses the exact release architecture, without
+      // inheriting arm64e system binaries or compressing the entire Node runtime.
+      const source = path.join(folder, "fixture.c");
+      await writeFile(source, "int main(void) { return 0; }\n");
+      await run("/usr/bin/clang", [
+        "-arch",
+        process.arch === "x64" ? "x86_64" : "arm64",
+        "-Os",
+        "-o",
         path.join(app, "Contents/MacOS/FriendlyAgenda"),
-      );
+        source,
+      ]);
       await writeFile(
         path.join(app, "Contents/Info.plist"),
         `<?xml version="1.0"?><plist version="1.0"><dict><key>CFBundleIdentifier</key><string>org.friendlyagenda.desktop</string><key>CFBundleExecutable</key><string>FriendlyAgenda</string><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleShortVersionString</key><string>${version}</string></dict></plist>`,
@@ -331,16 +337,26 @@ test(
       const imageSource = path.join(folder, "image");
       await bundle(imageSource, "9.0.0");
       const dmg = path.join(folder, "fixture.dmg");
-      await run("/usr/bin/hdiutil", [
-        "create",
-        "-srcfolder",
-        imageSource,
-        "-volname",
-        "FriendlyAgendaFixture",
-        "-format",
-        "UDZO",
-        dmg,
-      ]);
+      for (let attempt = 0; ; attempt++) {
+        try {
+          await run("/usr/bin/hdiutil", [
+            "create",
+            "-srcfolder",
+            imageSource,
+            "-volname",
+            "FriendlyAgendaFixture",
+            "-format",
+            "UDZO",
+            "-ov",
+            dmg,
+          ]);
+          break;
+        } catch (error) {
+          if (attempt >= 2 || !error.stderr?.includes("Resource busy"))
+            throw error;
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
       const bytes = await readFile(dmg);
       const oldProcess = spawn(
         process.execPath,
