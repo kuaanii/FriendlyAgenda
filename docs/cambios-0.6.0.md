@@ -7,3 +7,5 @@ La copia anterior se conserva temporalmente para recuperación y se elimina junt
 En Windows se admite la distribución portable; en Mac, la app debe haberse copiado a una ubicación escribible (normalmente Aplicaciones). La comprobación de Mac incluye versión, identificador, arquitectura y firma de integridad. No se ejecuta el reemplazo en desarrollo ni directamente desde un DMG montado. La app conserva los tres idiomas y el funcionamiento local sin conexión.
 
 La 0.5.1 y anteriores necesitan un último reemplazo manual para incorporar este mecanismo; las siguientes actualizaciones desde 0.6.0 se realizan dentro de la app. No se borran ejecutables ajenos o descargas antiguas que existieran previamente.
+
+Verificación: [compilación y pruebas en Windows, Mac Intel y Apple Silicon](https://github.com/kuaanii/FriendlyAgenda/actions/runs/39943513049). Incluye sustitución real de ejecutables en Windows y de una app instalada desde DMG en Mac, recuperación ante fallo de lanzamiento, rechazo de paquetes corruptos y protección de guardados pendientes. Las pruebas de interfaz comprueban la descarga sin navegador y el reinicio separado.
